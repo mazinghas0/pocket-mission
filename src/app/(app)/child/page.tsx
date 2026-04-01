@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { onAuthChange, signOut } from '@/lib/firebase/auth';
-import { getProfile, getFamily, subscribeToFamilyMissions } from '@/lib/firebase/db';
+import { getProfile, getFamily, getFamilyMembers, subscribeToFamilyMissions } from '@/lib/firebase/db';
 import { Card } from '@/components/ui/card';
 import { LevelBadge } from '@/components/ui/levelBadge';
 import { BottomNav } from '@/components/ui/bottomNav';
@@ -15,6 +15,7 @@ export default function ChildDashboard() {
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [missions, setMissions] = useState<Mission[]>([]);
+  const [familyMembers, setFamilyMembers] = useState<Profile[]>([]);
   const [pointRate, setPointRate] = useState(1);
   const [loading, setLoading] = useState(true);
 
@@ -29,8 +30,12 @@ export default function ChildDashboard() {
       if (p.role !== 'child') { router.replace('/parent'); return; }
 
       setProfile(p);
-      const fam = await getFamily(p.familyId);
+      const [fam, mbrs] = await Promise.all([
+        getFamily(p.familyId),
+        getFamilyMembers(p.familyId),
+      ]);
       if (fam) setPointRate(fam.pointRate ?? 1);
+      setFamilyMembers(mbrs);
       setLoading(false);
 
       unsubMissions = subscribeToFamilyMissions(p.familyId, (data) => {
@@ -111,6 +116,31 @@ export default function ChildDashboard() {
             </Card>
           </Link>
         </div>
+
+        {familyMembers.length > 0 && (
+          <Card>
+            <h2 className="font-semibold text-gray-800 mb-3">우리 가족</h2>
+            <div className="space-y-3">
+              {familyMembers.map((member) => (
+                <div key={member.id} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{member.role === 'parent' ? '👨' : '👧'}</span>
+                    <div>
+                      <span className="text-sm text-gray-700">
+                        {member.name}
+                        {member.id === profile?.id && <span className="text-xs text-purple-500 ml-1">(나)</span>}
+                      </span>
+                      <span className="text-xs text-gray-400 ml-1">
+                        {member.role === 'parent' ? '부모' : '자녀'}
+                      </span>
+                    </div>
+                    <LevelBadge points={member.points} compact />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
       </div>
       <BottomNav role="child" />
     </div>

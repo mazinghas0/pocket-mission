@@ -15,7 +15,7 @@ export default function ParentDashboard() {
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [family, setFamily] = useState<Family | null>(null);
-  const [children, setChildren] = useState<Profile[]>([]);
+  const [members, setMembers] = useState<Profile[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -52,7 +52,7 @@ export default function ParentDashboard() {
         getFamilyMembers(p.familyId),
       ]);
       setFamily(fam);
-      setChildren(members.filter(m => m.role === 'child'));
+      setMembers(members);
       setPageLoading(false);
 
       unsubMissions = subscribeToPendingSubmissions(p.familyId, (missions) => {
@@ -151,19 +151,27 @@ export default function ParentDashboard() {
           </Link>
         </div>
 
-        {children.length > 0 && (
+        {members.length > 0 && (
           <Card>
-            <h2 className="font-semibold text-gray-800 mb-3">자녀 현황</h2>
+            <h2 className="font-semibold text-gray-800 mb-3">가족 구성원</h2>
             <div className="space-y-3">
-              {children.map((child) => (
-                <div key={child.id} className="flex items-center justify-between">
+              {members.map((member) => (
+                <div key={member.id} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-700">{child.name}</span>
-                    <LevelBadge points={child.points} compact />
+                    <span className="text-lg">{member.role === 'parent' ? '👨' : '👧'}</span>
+                    <div>
+                      <span className="text-sm text-gray-700">{member.name}</span>
+                      <span className="text-xs text-gray-400 ml-1">
+                        {member.role === 'parent' ? '부모' : '자녀'}
+                      </span>
+                    </div>
+                    <LevelBadge points={member.points} compact />
                   </div>
-                  <span className="font-bold text-orange-600 text-sm">
-                    {formatPoints(child.points)}
-                  </span>
+                  {member.role === 'child' && (
+                    <span className="font-bold text-orange-600 text-sm">
+                      {formatPoints(member.points)}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
