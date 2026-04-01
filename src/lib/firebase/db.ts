@@ -82,7 +82,10 @@ export async function updateMissionStatus(missionId: string, status: Mission['st
 
 export function subscribeToFamilyMissions(familyId: string, cb: (missions: Mission[]) => void) {
   const q = query(missionsCol(), where('familyId', '==', familyId), orderBy('createdAt', 'desc'));
-  return onSnapshot(q, snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() } as Mission))));
+  return onSnapshot(q,
+    snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() } as Mission))),
+    err => { console.error('[subscribeToFamilyMissions]', err); cb([]); },
+  );
 }
 
 // ── 미션 제출(인증) ───────────────────────────────────────
@@ -141,7 +144,10 @@ export async function rejectSubmission(
 
 export function subscribeToPendingSubmissions(familyId: string, cb: (missions: Mission[]) => void) {
   const q = query(missionsCol(), where('familyId', '==', familyId), where('status', '==', 'submitted'));
-  return onSnapshot(q, snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() } as Mission))));
+  return onSnapshot(q,
+    snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() } as Mission))),
+    err => { console.error('[subscribeToPendingSubmissions]', err); cb([]); },
+  );
 }
 
 // ── 출금 요청 ─────────────────────────────────────────────
