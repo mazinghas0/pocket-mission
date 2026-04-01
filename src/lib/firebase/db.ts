@@ -1,6 +1,6 @@
 import {
   collection, doc, getDoc, getDocs, setDoc, addDoc,
-  updateDoc, query, where, orderBy, serverTimestamp,
+  updateDoc, deleteDoc, query, where, orderBy, serverTimestamp,
   onSnapshot, Timestamp, writeBatch,
 } from 'firebase/firestore';
 import { db } from './client';
@@ -78,6 +78,14 @@ export async function getMission(missionId: string): Promise<Mission | null> {
 
 export async function updateMissionStatus(missionId: string, status: Mission['status']): Promise<void> {
   await updateDoc(doc(missionsCol(), missionId), { status });
+}
+
+export async function updateMission(missionId: string, data: Partial<Pick<Mission, 'title' | 'description' | 'points' | 'dueDate' | 'isRecurring'>>): Promise<void> {
+  await updateDoc(doc(missionsCol(), missionId), data);
+}
+
+export async function deleteMission(missionId: string): Promise<void> {
+  await deleteDoc(doc(missionsCol(), missionId));
 }
 
 export function subscribeToFamilyMissions(familyId: string, cb: (missions: Mission[]) => void) {

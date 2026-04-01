@@ -42,6 +42,7 @@ service cloud.firestore {
       allow read: if isAuth() && isSameFamily(resource.data.familyId);
       allow create: if isAuth() && isParent() && isSameFamily(request.resource.data.familyId);
       allow update: if isAuth() && isSameFamily(resource.data.familyId);
+      allow delete: if isAuth() && isParent() && isSameFamily(resource.data.familyId);
 
       // 미션 인증(제출)
       match /submissions/{submissionId} {

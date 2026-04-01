@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getMissionStatusLabel, getMissionStatusColor, formatPoints, formatDate } from '@/lib/utils';
@@ -6,9 +7,14 @@ import type { Mission } from '@/types';
 interface MissionCardProps {
   mission: Mission;
   onClick?: () => void;
+  onDelete?: (missionId: string) => void;
+  onEdit?: (mission: Mission) => void;
+  showActions?: boolean;
 }
 
-export function MissionCard({ mission, onClick }: MissionCardProps) {
+export function MissionCard({ mission, onClick, onDelete, onEdit, showActions = false }: MissionCardProps) {
+  const [confirming, setConfirming] = useState(false);
+
   return (
     <div
       className={onClick ? 'cursor-pointer active:scale-[0.99]' : ''}
@@ -39,6 +45,44 @@ export function MissionCard({ mission, onClick }: MissionCardProps) {
         {mission.isRecurring && (
           <div className="mt-2">
             <Badge className="bg-blue-50 text-blue-600">반복</Badge>
+          </div>
+        )}
+
+        {showActions && mission.status === 'pending' && (
+          <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2">
+            {onEdit && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onEdit(mission); }}
+                className="text-xs text-gray-500 hover:text-orange-500 transition-colors"
+              >
+                수정
+              </button>
+            )}
+            {onDelete && !confirming && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setConfirming(true); }}
+                className="text-xs text-gray-500 hover:text-red-500 transition-colors"
+              >
+                삭제
+              </button>
+            )}
+            {onDelete && confirming && (
+              <>
+                <span className="text-xs text-red-500">정말 삭제할까요?</span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onDelete(mission.id); }}
+                  className="text-xs text-red-600 font-semibold"
+                >
+                  확인
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirming(false); }}
+                  className="text-xs text-gray-400"
+                >
+                  취소
+                </button>
+              </>
+            )}
           </div>
         )}
       </Card>

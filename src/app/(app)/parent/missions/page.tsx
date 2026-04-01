@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { onAuthChange } from '@/lib/firebase/auth';
-import { getProfile, subscribeToFamilyMissions } from '@/lib/firebase/db';
+import { getProfile, subscribeToFamilyMissions, deleteMission } from '@/lib/firebase/db';
 import { MissionCard } from '@/components/missions/missionCard';
 import { BottomNav } from '@/components/ui/bottomNav';
 import type { Mission, MissionStatus } from '@/types';
@@ -79,14 +79,21 @@ export default function ParentMissionsPage() {
         ) : filtered.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
             <div className="text-4xl mb-3">📋</div>
-            <p className="text-sm">미션이 없습니다</p>
-            <Link href="/parent/missions/new" className="text-orange-500 text-sm font-medium mt-2 block">
+            <p className="text-sm">아직 미션이 없어요</p>
+            <p className="text-xs mt-1">아이의 첫 미션을 만들어보세요!</p>
+            <Link href="/parent/missions/new" className="inline-block mt-3 bg-orange-500 text-white text-sm font-semibold px-5 py-2 rounded-xl">
               첫 미션 만들기
             </Link>
           </div>
         ) : (
           filtered.map((mission) => (
-            <MissionCard key={mission.id} mission={mission} />
+            <MissionCard
+              key={mission.id}
+              mission={mission}
+              showActions
+              onDelete={async (id) => { await deleteMission(id); }}
+              onEdit={(m) => router.push(`/parent/missions/new?edit=${m.id}`)}
+            />
           ))
         )}
       </div>

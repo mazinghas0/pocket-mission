@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signIn } from '@/lib/firebase/auth';
+import { signIn, resetPassword } from '@/lib/firebase/auth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,6 +11,21 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [resetSent, setResetSent] = useState(false);
+
+  async function handleResetPassword() {
+    if (!email.trim()) {
+      setError('이메일을 먼저 입력해주세요.');
+      return;
+    }
+    try {
+      await resetPassword(email);
+      setResetSent(true);
+      setError('');
+    } catch {
+      setError('비밀번호 재설정 메일 발송에 실패했습니다.');
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -64,6 +79,22 @@ export default function LoginPage() {
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
             </div>
+
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={handleResetPassword}
+                className="text-xs text-gray-400 hover:text-orange-500 transition-colors"
+              >
+                비밀번호를 잊으셨나요?
+              </button>
+            </div>
+
+            {resetSent && (
+              <p className="text-green-600 text-sm bg-green-50 rounded-lg px-3 py-2">
+                비밀번호 재설정 메일을 보냈습니다. 이메일을 확인해주세요.
+              </p>
+            )}
 
             {error && (
               <p className="text-red-500 text-sm bg-red-50 rounded-lg px-3 py-2">{error}</p>

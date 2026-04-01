@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { TemplatePicker } from '@/components/missions/templatePicker';
 import { getCurrentUser } from '@/lib/firebase/auth';
-import { getProfile, createMission } from '@/lib/firebase/db';
+import { getProfile, createMission, getMission, updateMission } from '@/lib/firebase/db';
 import { Timestamp } from 'firebase/firestore';
 import { BottomNav } from '@/components/ui/bottomNav';
 import type { MissionTemplate } from '@/types';
@@ -14,7 +14,10 @@ type Mode = 'select' | 'form';
 
 export default function NewMissionPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>('select');
+  const searchParams = useSearchParams();
+  const editId = searchParams.get('edit');
+
+  const [mode, setMode] = useState<Mode>(editId ? 'form' : 'select');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [points, setPoints] = useState(30);
@@ -23,6 +26,21 @@ export default function NewMissionPage() {
   const [templateId, setTemplateId] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!editId) return;
+    getMission(editId).then((m) => {
+      if (!m) return;
+      setTitle(m.title);
+      setDescription(m.description);
+      setPoints(m.points);
+      setIsRecurring(m.isRecurring);
+      if (m.dueDate) {
+        const d = m.dueDate.toDate();
+        setDueDate(d.toISOString().split('T')[0]);
+      }
+    });
+  }, [editId]);
 
   function handleTemplateSelect(template: MissionTemplate) {
     setTitle(template.title);
@@ -38,24 +56,34 @@ export default function NewMissionPage() {
     setLoading(true);
 
     try {
-      const user = getCurrentUser();
-      if (!user) throw new Error('로그인이 필요합니다.');
+      if (editId) {
+        await updateMission(editId, {
+          title,
+          description,
+          points,
+          isRecurring,
+          ...(dueDate ? { dueDate: Timestamp.fromDate(new Date(dueDate)) } : {}),
+        });
+      } else {
+        const user = getCurrentUser();
+        if (!user) throw new Error('로그인이 필요합니다.');
 
-      const profile = await getProfile(user.uid);
-      if (!profile?.familyId) throw new Error('가족이 연결되지 않았습니다.');
+        const profile = await getProfile(user.uid);
+        if (!profile?.familyId) throw new Error('가족이 연결되지 않았습니다.');
 
-      await createMission({
-        familyId: profile.familyId,
-        createdBy: user.uid,
-        assignedTo: null,
-        title,
-        description,
-        points,
-        isRecurring,
-        status: 'pending',
-        ...(dueDate && { dueDate: Timestamp.fromDate(new Date(dueDate)) }),
-        ...(templateId && { templateId }),
-      });
+        await createMission({
+          familyId: profile.familyId,
+          createdBy: user.uid,
+          assignedTo: null,
+          title,
+          description,
+          points,
+          isRecurring,
+          status: 'pending',
+          ...(dueDate && { dueDate: Timestamp.fromDate(new Date(dueDate)) }),
+          ...(templateId && { templateId }),
+        });
+      }
 
       router.push('/parent/missions');
     } catch (err) {
@@ -98,7 +126,7 @@ export default function NewMissionPage() {
         <div className="flex items-center gap-3 mb-1">
           <button onClick={() => setMode('select')} className="text-gray-500 text-sm">← 뒤로</button>
         </div>
-        <h1 className="font-bold text-gray-800 text-lg">미션 상세 설정</h1>
+        <h1 className="font-bold text-gray-800 text-lg">{editId ? '미션 수정' : '미션 상세 설정'}</h1>
       </div>
 
       <div className="px-4 mt-4">
@@ -182,7 +210,7 @@ export default function NewMissionPage() {
               disabled={loading}
               className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-semibold py-3 rounded-xl transition-colors"
             >
-              {loading ? '생성 중...' : '미션 만들기'}
+              {loading ? (editId ? '수정 중...' : '생성 중...') : (editId ? '미션 수정' : '미션 만들기')}
             </button>
           </form>
         </div>

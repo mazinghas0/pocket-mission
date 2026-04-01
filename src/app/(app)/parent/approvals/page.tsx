@@ -78,7 +78,8 @@ export default function ApprovalsPage() {
         ) : submissions.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
             <div className="text-4xl mb-3">✅</div>
-            <p className="text-sm">인증 대기 중인 미션이 없습니다</p>
+            <p className="text-sm">모든 인증을 처리했어요!</p>
+            <p className="text-xs mt-1 text-gray-300">자녀가 미션을 완료하면 여기에 표시됩니다</p>
           </div>
         ) : (
           submissions.map((submission) => (
