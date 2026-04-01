@@ -55,3 +55,44 @@ export function getMissionStatusColor(status: string): string {
   };
   return colors[status] ?? 'bg-gray-100 text-gray-700';
 }
+
+// ── 레벨 시스템 ─────────────────────────────────────────
+
+interface LevelInfo {
+  level: number;
+  title: string;
+  emoji: string;
+  currentPoints: number;
+  nextLevelPoints: number | null;
+  progress: number;
+}
+
+const LEVELS = [
+  { min: 0, title: '새싹', emoji: '🌱' },
+  { min: 100, title: '도전자', emoji: '🔥' },
+  { min: 300, title: '습관왕', emoji: '👑' },
+  { min: 700, title: '미션마스터', emoji: '🏆' },
+  { min: 1500, title: '포켓히어로', emoji: '🦸' },
+] as const;
+
+export function getLevel(points: number): LevelInfo {
+  let levelIdx = 0;
+  for (let i = LEVELS.length - 1; i >= 0; i--) {
+    if (points >= LEVELS[i].min) { levelIdx = i; break; }
+  }
+
+  const current = LEVELS[levelIdx];
+  const next = LEVELS[levelIdx + 1] ?? null;
+  const progress = next
+    ? Math.min(100, Math.round(((points - current.min) / (next.min - current.min)) * 100))
+    : 100;
+
+  return {
+    level: levelIdx + 1,
+    title: current.title,
+    emoji: current.emoji,
+    currentPoints: points,
+    nextLevelPoints: next?.min ?? null,
+    progress,
+  };
+}

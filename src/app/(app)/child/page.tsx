@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { onAuthChange } from '@/lib/firebase/auth';
+import { onAuthChange, signOut } from '@/lib/firebase/auth';
 import { getProfile, subscribeToFamilyMissions } from '@/lib/firebase/db';
 import { Card } from '@/components/ui/card';
+import { LevelBadge } from '@/components/ui/levelBadge';
 import { PointBalance } from '@/components/wallet/pointBalance';
 import type { Profile, Mission } from '@/types';
 
@@ -53,12 +54,28 @@ export default function ChildDashboard() {
   return (
     <div className="min-h-screen bg-purple-50 pb-20">
       <div className="bg-gradient-to-br from-purple-500 to-purple-600 px-4 pt-12 pb-8 text-white">
-        <p className="text-purple-100 text-sm">안녕하세요,</p>
-        <h1 className="text-2xl font-bold mt-1">{profile?.name} 님!</h1>
-        <p className="text-purple-100 text-sm mt-1">오늘도 미션을 완료해 보세요</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-purple-100 text-sm">안녕하세요,</p>
+            <h1 className="text-2xl font-bold mt-1">{profile?.name} 님!</h1>
+            <p className="text-purple-100 text-sm mt-1">오늘도 미션을 완료해 보세요</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link href="/settings" className="text-purple-200 hover:text-white text-xs transition-colors">
+              설정
+            </Link>
+            <button
+              onClick={async () => { await signOut(); router.push('/login'); }}
+              className="text-purple-200 hover:text-white text-xs transition-colors"
+            >
+              로그아웃
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="px-4 -mt-4 space-y-4">
+        <LevelBadge points={profile?.points ?? 0} />
         <PointBalance points={profile?.points ?? 0} />
 
         <div className="grid grid-cols-2 gap-3">

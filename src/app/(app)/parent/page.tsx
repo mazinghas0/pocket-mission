@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { onAuthChange } from '@/lib/firebase/auth';
+import { onAuthChange, signOut } from '@/lib/firebase/auth';
 import { getProfile, getFamily, getFamilyMembers, subscribeToPendingSubmissions } from '@/lib/firebase/db';
 import { Card } from '@/components/ui/card';
-import { UpgradeBanner } from '@/components/ui/upgradeBanner';
+import { LevelBadge } from '@/components/ui/levelBadge';
 import { formatPoints } from '@/lib/utils';
 import type { Profile, Family } from '@/types';
 
@@ -16,7 +16,22 @@ export default function ParentDashboard() {
   const [family, setFamily] = useState<Family | null>(null);
   const [children, setChildren] = useState<Profile[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopyInviteCode() {
+    if (!family) return;
+    await navigator.clipboard.writeText(family.inviteCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function handleLogout() {
+    await signOut();
+    router.push('/login');
+  }
+
+  const [pageLoading, setPageLoading] = useState(true);
 
   useEffect(() => {
     let unsubMissions: (() => void) | null = null;
@@ -36,7 +51,7 @@ export default function ParentDashboard() {
       ]);
       setFamily(fam);
       setChildren(members.filter(m => m.role === 'child'));
-      setLoading(false);
+      setPageLoading(false);
 
       unsubMissions = subscribeToPendingSubmissions(p.familyId, (missions) => {
         setPendingCount(missions.length);
@@ -46,7 +61,7 @@ export default function ParentDashboard() {
     return () => { unsubAuth(); unsubMissions?.(); };
   }, [router]);
 
-  if (loading) {
+  if (pageLoading) {
     return (
       <div className="min-h-screen bg-orange-50 flex items-center justify-center">
         <p className="text-gray-400 text-sm">불러오는 중...</p>
@@ -57,14 +72,32 @@ export default function ParentDashboard() {
   return (
     <div className="min-h-screen bg-orange-50 pb-20">
       <div className="bg-gradient-to-br from-orange-500 to-orange-600 px-4 pt-12 pb-8 text-white">
-        <p className="text-orange-100 text-sm">안녕하세요,</p>
-        <h1 className="text-2xl font-bold mt-1">{profile?.name} 님</h1>
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-orange-100 text-sm">안녕하세요,</p>
+            <h1 className="text-2xl font-bold mt-1">{profile?.name} 님</h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link href="/settings" className="text-orange-200 hover:text-white text-xs transition-colors">
+              설정
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="text-orange-200 hover:text-white text-xs transition-colors"
+            >
+              로그아웃
+            </button>
+          </div>
+        </div>
         {family && (
           <div className="flex items-center gap-2 mt-3">
             <span className="text-orange-100 text-sm">{family.name}</span>
-            <span className="bg-white/20 rounded-lg px-2 py-0.5 text-xs font-mono">
-              {family.inviteCode}
-            </span>
+            <button
+              onClick={handleCopyInviteCode}
+              className="bg-white/20 hover:bg-white/30 rounded-lg px-2 py-0.5 text-xs font-mono transition-colors"
+            >
+              {copied ? '복사됨!' : family.inviteCode}
+            </button>
             {family.subscriptionStatus === 'premium' && (
               <span className="bg-yellow-300 text-yellow-900 rounded-full px-2 py-0.5 text-xs font-semibold">
                 프리미엄
@@ -118,11 +151,14 @@ export default function ParentDashboard() {
 
         {children.length > 0 && (
           <Card>
-            <h2 className="font-semibold text-gray-800 mb-3">자녀 포인트 현황</h2>
-            <div className="space-y-2">
+            <h2 className="font-semibold text-gray-800 mb-3">자녀 현황</h2>
+            <div className="space-y-3">
               {children.map((child) => (
                 <div key={child.id} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">{child.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-700">{child.name}</span>
+                    <LevelBadge points={child.points} compact />
+                  </div>
                   <span className="font-bold text-orange-600 text-sm">
                     {formatPoints(child.points)}
                   </span>
@@ -132,7 +168,14 @@ export default function ParentDashboard() {
           </Card>
         )}
 
-        {family?.subscriptionStatus === 'free' && <UpgradeBanner />}
+        {family?.subscriptionStatus === 'free' && (
+          <button
+            onClick={() => router.push('/parent/wallet')}
+            className="w-full text-center text-xs text-gray-400 hover:text-purple-500 py-2 transition-colors"
+          >
+            프리미엄 업그레이드로 미션 무제한 사용하기 →
+          </button>
+        )}
       </div>
     </div>
   );
