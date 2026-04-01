@@ -20,14 +20,17 @@ export default function InvitePage() {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    getFamilyByInviteCode(code.toUpperCase()).then((fam) => {
-      setFamily(fam);
-      setLoading(false);
-    });
-
     const unsub = onAuthChange((user) => {
       setIsLoggedIn(!!user);
       setUserId(user?.uid ?? null);
+
+      if (user) {
+        getFamilyByInviteCode(code.toUpperCase())
+          .then((fam) => { setFamily(fam); setLoading(false); })
+          .catch(() => { setLoading(false); });
+      } else {
+        setLoading(false);
+      }
     });
     return () => unsub();
   }, [code]);
@@ -60,6 +63,33 @@ export default function InvitePage() {
   }
 
   if (!family) {
+    if (!isLoggedIn) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-gradient-to-b from-orange-50 to-orange-100">
+          <div className="w-full max-w-sm text-center">
+            <div className="text-5xl mb-4">👨‍👩‍👧‍👦</div>
+            <h1 className="text-xl font-bold text-gray-800">가족 초대</h1>
+            <p className="text-gray-500 mt-2">가족에 초대받았습니다!</p>
+            <div className="bg-white rounded-2xl shadow-sm p-6 mt-6 space-y-4">
+              <p className="text-sm text-gray-600">참여하려면 먼저 계정이 필요해요</p>
+              <Link
+                href={`/register?invite=${code}`}
+                className="block w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-xl transition-colors text-center"
+              >
+                회원가입 후 참여하기
+              </Link>
+              <Link
+                href={`/login?invite=${code}`}
+                className="block text-sm text-gray-500 hover:text-orange-500 transition-colors"
+              >
+                이미 계정이 있으신가요? 로그인
+              </Link>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-orange-50">
         <div className="text-5xl mb-4">😥</div>
