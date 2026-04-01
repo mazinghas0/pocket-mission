@@ -4,7 +4,11 @@ import {
   onSnapshot, Timestamp, writeBatch,
 } from 'firebase/firestore';
 import { db } from './client';
-import type { Family, Profile, Mission, MissionSubmission, PointTransaction, WithdrawalRequest, MissionTemplate, SubmissionWithDetails } from '@/types';
+import type {
+  Family, Profile, Mission, MissionSubmission, PointTransaction,
+  WithdrawalRequest, MissionTemplate, SubmissionWithDetails,
+  MissionDefinition, MissionAssignment, AssignmentSubmission, AssignmentWithDetails,
+} from '@/types';
 
 // ── 컬렉션 참조 ──────────────────────────────────────────
 
@@ -16,6 +20,12 @@ export const transactionsCol = () => collection(db, 'transactions');
 export const withdrawalsCol = () => collection(db, 'withdrawal_requests');
 export const submissionsCol = (missionId: string) =>
   collection(db, 'missions', missionId, 'submissions');
+
+// ── 신규 컬렉션 참조 (정의/배정 구조) ────────────────────
+export const definitionsCol = () => collection(db, 'mission_definitions');
+export const assignmentsCol = () => collection(db, 'mission_assignments');
+export const assignmentSubmissionsCol = (assignmentId: string) =>
+  collection(db, 'mission_assignments', assignmentId, 'submissions');
 
 // ── 사용자 프로필 ─────────────────────────────────────────
 
@@ -233,4 +243,200 @@ export async function getPendingFamilySubmissions(familyId: string): Promise<Sub
 export async function getMissionTemplates(): Promise<MissionTemplate[]> {
   const snap = await getDocs(templatesCol());
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as MissionTemplate));
+}
+
+// ══════════════════════════════════════════════════════════
+// 신규: 미션 정의 + 배정 구조
+// ══════════════════════════════════════════════════════════
+
+// ── 미션 정의 ─────────────────────────────────────────────
+
+export async function createMissionDefinitionWithAssignments(
+  defData: Omit<MissionDefinition, 'id' | 'createdAt'>,
+  childIds: string[],
+): Promise<string> {
+  const batch = writeBatch(db);
+  const defRef = doc(definitionsCol());
+  batch.set(defRef, { ...defData, createdAt: serverTimestamp() });
+
+  for (const childId of childIds) {
+    const assignRef = doc(assignmentsCol());
+    batch.set(assignRef, {
+      definitionId: defRef.id,
+      familyId: defData.familyId,
+      childId,
+      title: defData.title,
+      description: defData.description,
+      points: defData.points,
+      isRecurring: defData.isRecurring,
+      ...(defData.templateId && { templateId: defData.templateId }),
+      ...(defData.dueDate && { dueDate: defData.dueDate }),
+      status: 'pending',
+      createdAt: serverTimestamp(),
+    });
+  }
+
+  await batch.commit();
+  return defRef.id;
+}
+
+export function subscribeFamilyDefinitions(
+  familyId: string,
+  cb: (defs: MissionDefinition[]) => void,
+) {
+  const q = query(definitionsCol(), where('familyId', '==', familyId), orderBy('createdAt', 'desc'));
+  return onSnapshot(q,
+    snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() } as MissionDefinition))),
+    err => { console.error('[subscribeFamilyDefinitions]', err); cb([]); },
+  );
+}
+
+export async function getDefinitionAssignments(definitionId: string): Promise<MissionAssignment[]> {
+  const q = query(assignmentsCol(), where('definitionId', '==', definitionId));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as MissionAssignment));
+}
+
+export async function getFamilyAssignments(familyId: string): Promise<MissionAssignment[]> {
+  const q = query(assignmentsCol(), where('familyId', '==', familyId));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as MissionAssignment));
+}
+
+export async function updateDefinition(
+  defId: string,
+  data: Partial<Pick<MissionDefinition, 'title' | 'description' | 'points' | 'dueDate' | 'isRecurring'>>,
+): Promise<void> {
+  const batch = writeBatch(db);
+  batch.update(doc(definitionsCol(), defId), data);
+
+  const assignments = await getDefinitionAssignments(defId);
+  for (const a of assignments) {
+    if (a.status === 'pending') {
+      batch.update(doc(assignmentsCol(), a.id), data);
+    }
+  }
+  await batch.commit();
+}
+
+export async function deleteMissionDefinition(defId: string): Promise<void> {
+  const assignments = await getDefinitionAssignments(defId);
+  const batch = writeBatch(db);
+
+  for (const a of assignments) {
+    const subSnap = await getDocs(assignmentSubmissionsCol(a.id));
+    subSnap.docs.forEach(s => batch.delete(s.ref));
+    batch.delete(doc(assignmentsCol(), a.id));
+  }
+  batch.delete(doc(definitionsCol(), defId));
+  await batch.commit();
+}
+
+// ── 미션 배정 ─────────────────────────────────────────────
+
+export async function getAssignment(assignmentId: string): Promise<MissionAssignment | null> {
+  const snap = await getDoc(doc(assignmentsCol(), assignmentId));
+  return snap.exists() ? ({ id: snap.id, ...snap.data() } as MissionAssignment) : null;
+}
+
+export function subscribeChildAssignments(
+  childId: string,
+  familyId: string,
+  cb: (assignments: MissionAssignment[]) => void,
+) {
+  const q = query(
+    assignmentsCol(),
+    where('childId', '==', childId),
+    where('familyId', '==', familyId),
+    orderBy('createdAt', 'desc'),
+  );
+  return onSnapshot(q,
+    snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() } as MissionAssignment))),
+    err => { console.error('[subscribeChildAssignments]', err); cb([]); },
+  );
+}
+
+export async function updateAssignmentStatus(
+  assignmentId: string,
+  status: MissionAssignment['status'],
+): Promise<void> {
+  await updateDoc(doc(assignmentsCol(), assignmentId), { status });
+}
+
+// ── 배정 인증(제출) ───────────────────────────────────────
+
+export async function createAssignmentSubmission(
+  assignmentId: string,
+  data: Omit<AssignmentSubmission, 'id' | 'createdAt'>,
+): Promise<string> {
+  const batch = writeBatch(db);
+  const subRef = doc(assignmentSubmissionsCol(assignmentId));
+  batch.set(subRef, { ...data, createdAt: serverTimestamp() });
+  batch.update(doc(assignmentsCol(), assignmentId), { status: 'submitted' });
+  await batch.commit();
+  return subRef.id;
+}
+
+export async function approveAssignmentSubmission(
+  assignmentId: string,
+  submissionId: string,
+  childId: string,
+  points: number,
+  reviewerId: string,
+): Promise<void> {
+  const childProfile = await getProfile(childId);
+  const batch = writeBatch(db);
+  batch.update(doc(assignmentSubmissionsCol(assignmentId), submissionId), {
+    status: 'approved', reviewedBy: reviewerId, reviewedAt: serverTimestamp(),
+  });
+  batch.update(doc(assignmentsCol(), assignmentId), { status: 'approved' });
+  batch.update(doc(usersCol(), childId), { points: (childProfile?.points ?? 0) + points });
+  const txRef = doc(transactionsCol());
+  batch.set(txRef, {
+    profileId: childId, amount: points, type: 'earned',
+    missionId: assignmentId, description: '미션 완료 포인트', createdAt: serverTimestamp(),
+  });
+  await batch.commit();
+}
+
+export async function rejectAssignmentSubmission(
+  assignmentId: string,
+  submissionId: string,
+  reviewerId: string,
+  reason: string,
+): Promise<void> {
+  const batch = writeBatch(db);
+  batch.update(doc(assignmentSubmissionsCol(assignmentId), submissionId), {
+    status: 'rejected', reviewedBy: reviewerId, reviewedAt: serverTimestamp(), rejectionReason: reason,
+  });
+  batch.update(doc(assignmentsCol(), assignmentId), { status: 'rejected' });
+  await batch.commit();
+}
+
+export async function getAssignmentSubmissions(assignmentId: string): Promise<AssignmentSubmission[]> {
+  const snap = await getDocs(assignmentSubmissionsCol(assignmentId));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as AssignmentSubmission));
+}
+
+export async function getPendingFamilyAssignmentSubmissions(
+  familyId: string,
+): Promise<AssignmentWithDetails[]> {
+  const q = query(
+    assignmentsCol(),
+    where('familyId', '==', familyId),
+    where('status', '==', 'submitted'),
+  );
+  const snap = await getDocs(q);
+  const submittedAssignments = snap.docs.map(d => ({ id: d.id, ...d.data() } as MissionAssignment));
+
+  const result: AssignmentWithDetails[] = [];
+  for (const assignment of submittedAssignments) {
+    const subs = await getAssignmentSubmissions(assignment.id);
+    for (const sub of subs) {
+      if (sub.status !== 'pending') continue;
+      const childProfile = await getProfile(sub.childId);
+      result.push({ ...sub, assignment, childProfile: childProfile ?? undefined });
+    }
+  }
+  return result;
 }

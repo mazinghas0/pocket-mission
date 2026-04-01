@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getMissionStatusLabel, getMissionStatusColor, formatPoints, formatDate } from '@/lib/utils';
-import type { Mission } from '@/types';
+import type { Mission, MissionAssignment } from '@/types';
 
 interface MissionCardProps {
-  mission: Mission;
+  mission: Mission | MissionAssignment;
   onClick?: () => void;
   onDelete?: (missionId: string) => void;
-  onEdit?: (mission: Mission) => void;
+  onEdit?: (mission: Mission | MissionAssignment) => void;
   showActions?: boolean;
 }
 

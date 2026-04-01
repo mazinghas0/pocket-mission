@@ -70,5 +70,28 @@ service cloud.firestore {
       allow read: if isAuth();
       allow write: if false;
     }
+
+    // 미션 정의 (부모만 생성/수정/삭제, 같은 가족 읽기)
+    match /mission_definitions/{defId} {
+      allow read: if isAuth() && isSameFamily(resource.data.familyId);
+      allow create: if isAuth() && isParent() && isSameFamily(request.resource.data.familyId);
+      allow update: if isAuth() && isParent() && isSameFamily(resource.data.familyId);
+      allow delete: if isAuth() && isParent() && isSameFamily(resource.data.familyId);
+    }
+
+    // 미션 배정 (같은 가족 읽기, 부모 생성/삭제, 배정된 자녀 상태 업데이트)
+    match /mission_assignments/{assignId} {
+      allow read: if isAuth() && isSameFamily(resource.data.familyId);
+      allow create: if isAuth() && isParent() && isSameFamily(request.resource.data.familyId);
+      allow update: if isAuth() && isSameFamily(resource.data.familyId);
+      allow delete: if isAuth() && isParent() && isSameFamily(resource.data.familyId);
+
+      // 배정 인증(제출)
+      match /submissions/{subId} {
+        allow read: if isAuth() && isSameFamily(get(/databases/$(database)/documents/mission_assignments/$(assignId)).data.familyId);
+        allow create: if isAuth() && request.auth.uid == request.resource.data.childId;
+        allow update: if isAuth() && isParent();
+      }
+    }
   }
 }

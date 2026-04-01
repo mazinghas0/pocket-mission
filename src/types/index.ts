@@ -94,7 +94,56 @@ export interface WithdrawalRequest {
   createdAt: Timestamp;
 }
 
-// API 요청/응답 타입
+// ── 미션 정의 (부모가 생성하는 템플릿 역할) ────────────────
+export interface MissionDefinition {
+  id: string;
+  familyId: string;
+  createdBy: string;
+  title: string;
+  description: string;
+  points: number;
+  isRecurring: boolean;
+  templateId?: string;
+  dueDate?: Timestamp;
+  createdAt: Timestamp;
+}
+
+// ── 미션 배정 (자녀별 독립 실행 단위) ─────────────────────
+export interface MissionAssignment {
+  id: string;
+  definitionId: string;
+  familyId: string;
+  childId: string;
+  title: string;
+  description: string;
+  points: number;
+  isRecurring: boolean;
+  templateId?: string;
+  dueDate?: Timestamp;
+  status: MissionStatus;
+  createdAt: Timestamp;
+}
+
+// ── 배정 인증(제출) ────────────────────────────────────────
+export interface AssignmentSubmission {
+  id: string;
+  assignmentId: string;
+  childId: string;
+  photoUrl: string;
+  memo: string;
+  status: SubmissionStatus;
+  rejectionReason?: string;
+  reviewedBy?: string;
+  reviewedAt?: Timestamp;
+  createdAt: Timestamp;
+}
+
+export interface AssignmentWithDetails extends AssignmentSubmission {
+  assignment?: MissionAssignment;
+  childProfile?: Profile;
+}
+
+// ── API 요청/응답 타입
 export interface CreateFamilyRequest {
   name: string;
 }

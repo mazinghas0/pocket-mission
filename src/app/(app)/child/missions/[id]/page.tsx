@@ -6,17 +6,16 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { getCurrentUser } from '@/lib/firebase/auth';
-import { getMission, createSubmission } from '@/lib/firebase/db';
+import { getAssignment, createAssignmentSubmission } from '@/lib/firebase/db';
 import { uploadMissionPhoto } from '@/lib/firebase/storage';
 import { Badge } from '@/components/ui/badge';
 import { BottomNav } from '@/components/ui/bottomNav';
 import { getMissionStatusLabel, getMissionStatusColor, formatPoints } from '@/lib/utils';
-import type { Mission } from '@/types';
 
 export default function MissionSubmitPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
-  const [mission, setMission] = useState<Mission | null>(null);
+  const [mission, setMission] = useState<import('@/types').MissionAssignment | null>(null);
   const [loading, setLoading] = useState(true);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState('');
@@ -25,7 +24,7 @@ export default function MissionSubmitPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    getMission(id).then((data) => {
+    getAssignment(id).then((data) => {
       setMission(data);
       setLoading(false);
     });
@@ -53,8 +52,8 @@ export default function MissionSubmitPage() {
 
       const photoUrl = await uploadMissionPhoto(mission.familyId, id, photoFile);
 
-      await createSubmission(id, {
-        missionId: id,
+      await createAssignmentSubmission(id, {
+        assignmentId: id,
         childId: user.uid,
         photoUrl,
         memo,

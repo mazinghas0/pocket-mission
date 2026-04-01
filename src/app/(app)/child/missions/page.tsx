@@ -4,17 +4,18 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useMissions } from '@/hooks/useMissions';
 import { MissionCard } from '@/components/missions/missionCard';
+import type { MissionAssignment } from '@/types';
 import { BottomNav } from '@/components/ui/bottomNav';
 
 export default function ChildMissionsPage() {
   const router = useRouter();
   const { missions, loading, error } = useMissions();
 
-  const activeMissions = missions.filter((m) =>
+  const activeMissions = missions.filter((m: MissionAssignment) =>
     ['pending', 'in_progress'].includes(m.status)
   );
-  const submittedMissions = missions.filter((m) => m.status === 'submitted');
-  const doneMissions = missions.filter((m) =>
+  const submittedMissions = missions.filter((m: MissionAssignment) => m.status === 'submitted');
+  const doneMissions = missions.filter((m: MissionAssignment) =>
     ['approved', 'rejected'].includes(m.status)
   );
 
@@ -61,7 +62,11 @@ export default function ChildMissionsPage() {
             <h2 className="font-semibold text-gray-700 mb-2 text-sm">승인 대기 중</h2>
             <div className="space-y-3">
               {submittedMissions.map((mission) => (
-                <MissionCard key={mission.id} mission={mission} />
+                <MissionCard
+                  key={mission.id}
+                  mission={mission}
+                  onClick={() => router.push(`/child/missions/${mission.id}`)}
+                />
               ))}
             </div>
           </div>
@@ -72,7 +77,11 @@ export default function ChildMissionsPage() {
             <h2 className="font-semibold text-gray-700 mb-2 text-sm">완료/반려된 미션</h2>
             <div className="space-y-3">
               {doneMissions.map((mission) => (
-                <MissionCard key={mission.id} mission={mission} />
+                <MissionCard
+                  key={mission.id}
+                  mission={mission}
+                  onClick={() => router.push(`/child/missions/${mission.id}`)}
+                />
               ))}
             </div>
           </div>

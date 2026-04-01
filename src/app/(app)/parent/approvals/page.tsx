@@ -5,16 +5,16 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { onAuthChange } from '@/lib/firebase/auth';
 import {
-  getProfile, getPendingFamilySubmissions,
-  approveSubmission, rejectSubmission,
+  getProfile, getPendingFamilyAssignmentSubmissions,
+  approveAssignmentSubmission, rejectAssignmentSubmission,
 } from '@/lib/firebase/db';
 import { SubmissionCard } from '@/components/missions/submissionCard';
 import { BottomNav } from '@/components/ui/bottomNav';
-import type { SubmissionWithDetails } from '@/types';
+import type { AssignmentWithDetails } from '@/types';
 
 export default function ApprovalsPage() {
   const router = useRouter();
-  const [submissions, setSubmissions] = useState<SubmissionWithDetails[]>([]);
+  const [submissions, setSubmissions] = useState<AssignmentWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
@@ -24,7 +24,7 @@ export default function ApprovalsPage() {
 
   const fetchSubmissions = useCallback(async (fid: string) => {
     setLoading(true);
-    const data = await getPendingFamilySubmissions(fid);
+    const data = await getPendingFamilyAssignmentSubmissions(fid);
     setSubmissions(data);
     setLoading(false);
   }, []);
@@ -44,8 +44,8 @@ export default function ApprovalsPage() {
   async function handleApprove(submissionId: string) {
     setProcessing(true);
     const sub = submissions.find(s => s.id === submissionId);
-    if (!sub?.mission) { setProcessing(false); return; }
-    await approveSubmission(sub.mission.id, submissionId, sub.childId, sub.mission.points, parentUid);
+    if (!sub?.assignment) { setProcessing(false); return; }
+    await approveAssignmentSubmission(sub.assignment.id, submissionId, sub.childId, sub.assignment.points, parentUid);
     await fetchSubmissions(familyId);
     setProcessing(false);
   }
@@ -54,8 +54,8 @@ export default function ApprovalsPage() {
     if (!rejectReason.trim()) return;
     setProcessing(true);
     const sub = submissions.find(s => s.id === submissionId);
-    if (!sub?.mission) { setProcessing(false); return; }
-    await rejectSubmission(sub.mission.id, submissionId, parentUid, rejectReason);
+    if (!sub?.assignment) { setProcessing(false); return; }
+    await rejectAssignmentSubmission(sub.assignment.id, submissionId, parentUid, rejectReason);
     setRejectTarget(null);
     setRejectReason('');
     await fetchSubmissions(familyId);

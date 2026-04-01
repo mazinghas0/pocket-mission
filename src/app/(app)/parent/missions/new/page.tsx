@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { TemplatePicker } from '@/components/missions/templatePicker';
 import { getCurrentUser } from '@/lib/firebase/auth';
-import { getProfile, createMission, getMission, updateMission } from '@/lib/firebase/db';
+import { getProfile, getFamilyMembers, createMissionDefinitionWithAssignments, getAssignment, updateDefinition } from '@/lib/firebase/db';
 import { Timestamp } from 'firebase/firestore';
 import { BottomNav } from '@/components/ui/bottomNav';
 import type { MissionTemplate } from '@/types';
@@ -29,7 +29,7 @@ export default function NewMissionPage() {
 
   useEffect(() => {
     if (!editId) return;
-    getMission(editId).then((m) => {
+    getAssignment(editId).then((m) => {
       if (!m) return;
       setTitle(m.title);
       setDescription(m.description);
@@ -57,7 +57,7 @@ export default function NewMissionPage() {
 
     try {
       if (editId) {
-        await updateMission(editId, {
+        await updateDefinition(editId, {
           title,
           description,
           points,
@@ -71,18 +71,23 @@ export default function NewMissionPage() {
         const profile = await getProfile(user.uid);
         if (!profile?.familyId) throw new Error('가족이 연결되지 않았습니다.');
 
-        await createMission({
-          familyId: profile.familyId,
-          createdBy: user.uid,
-          assignedTo: null,
-          title,
-          description,
-          points,
-          isRecurring,
-          status: 'pending',
-          ...(dueDate && { dueDate: Timestamp.fromDate(new Date(dueDate)) }),
-          ...(templateId && { templateId }),
-        });
+        const members = await getFamilyMembers(profile.familyId);
+        const childIds = members.filter(m => m.role === 'child').map(m => m.id);
+        if (childIds.length === 0) throw new Error('가족에 자녀가 없습니다.');
+
+        await createMissionDefinitionWithAssignments(
+          {
+            familyId: profile.familyId,
+            createdBy: user.uid,
+            title,
+            description,
+            points,
+            isRecurring,
+            ...(dueDate && { dueDate: Timestamp.fromDate(new Date(dueDate)) }),
+            ...(templateId && { templateId }),
+          },
+          childIds,
+        );
       }
 
       router.push('/parent/missions');

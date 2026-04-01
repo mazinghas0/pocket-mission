@@ -4,10 +4,10 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { Card } from '@/components/ui/card';
 import { formatDateTime, formatPoints } from '@/lib/utils';
-import type { SubmissionWithDetails } from '@/types';
+import type { AssignmentWithDetails } from '@/types';
 
 interface SubmissionCardProps {
-  submission: SubmissionWithDetails;
+  submission: AssignmentWithDetails;
   onApprove?: (id: string) => void;
   onReject?: (id: string) => void;
 }
@@ -21,15 +21,15 @@ export function SubmissionCard({ submission, onApprove, onReject }: SubmissionCa
       <div className="flex items-start justify-between gap-2 mb-3">
         <div>
           <h3 className="font-semibold text-gray-800">
-            {submission.mission?.title ?? '미션'}
+            {submission.assignment?.title ?? '미션'}
           </h3>
           <p className="text-xs text-gray-500 mt-0.5">
             {submission.childProfile?.name} · {formatDateTime(submission.createdAt)}
           </p>
         </div>
-        {submission.mission && (
+        {submission.assignment && (
           <span className="text-orange-600 font-bold text-sm shrink-0">
-            {formatPoints(submission.mission.points)}
+            {formatPoints(submission.assignment.points)}
           </span>
         )}
       </div>

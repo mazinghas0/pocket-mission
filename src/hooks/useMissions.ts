@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { onAuthChange } from '@/lib/firebase/auth';
-import { getProfile, subscribeToFamilyMissions } from '@/lib/firebase/db';
-import type { Mission } from '@/types';
+import { getProfile, subscribeChildAssignments } from '@/lib/firebase/db';
+import type { MissionAssignment } from '@/types';
 
 export function useMissions() {
-  const [missions, setMissions] = useState<Mission[]>([]);
+  const [missions, setMissions] = useState<MissionAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -28,11 +28,8 @@ export function useMissions() {
           return;
         }
 
-        unsubMissions = subscribeToFamilyMissions(profile.familyId, (data) => {
-          const filtered = profile.role === 'child'
-            ? data.filter(m => m.assignedTo === user.uid || m.assignedTo === null)
-            : data;
-          setMissions(filtered);
+        unsubMissions = subscribeChildAssignments(user.uid, profile.familyId, (data) => {
+          setMissions(data);
           setLoading(false);
         });
       } catch {
