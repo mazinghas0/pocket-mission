@@ -48,7 +48,7 @@ export function MissionCard({ mission, onClick, onDelete, onEdit, showActions = 
           </div>
         )}
 
-        {showActions && (mission.status === 'pending' || mission.status === 'approved' || mission.status === 'rejected') && (
+        {showActions && (
           <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2">
             {onEdit && mission.status === 'pending' && (
               <button
