@@ -30,6 +30,7 @@ export default function OnboardingPage() {
         name: familyName,
         inviteCode: code,
         subscriptionStatus: 'free',
+        pointRate: 1,
       });
 
       await updateProfile(user.uid, { familyId });

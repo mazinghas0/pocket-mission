@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { onAuthChange, signOut } from '@/lib/firebase/auth';
-import { getProfile, subscribeToFamilyMissions } from '@/lib/firebase/db';
+import { getProfile, getFamily, subscribeToFamilyMissions } from '@/lib/firebase/db';
 import { Card } from '@/components/ui/card';
 import { LevelBadge } from '@/components/ui/levelBadge';
 import { BottomNav } from '@/components/ui/bottomNav';
@@ -15,6 +15,7 @@ export default function ChildDashboard() {
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [missions, setMissions] = useState<Mission[]>([]);
+  const [pointRate, setPointRate] = useState(1);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,6 +29,8 @@ export default function ChildDashboard() {
       if (p.role !== 'child') { router.replace('/parent'); return; }
 
       setProfile(p);
+      const fam = await getFamily(p.familyId);
+      if (fam) setPointRate(fam.pointRate ?? 1);
       setLoading(false);
 
       unsubMissions = subscribeToFamilyMissions(p.familyId, (data) => {
@@ -77,7 +80,7 @@ export default function ChildDashboard() {
 
       <div className="px-4 -mt-4 space-y-4">
         <LevelBadge points={profile?.points ?? 0} />
-        <PointBalance points={profile?.points ?? 0} />
+        <PointBalance points={profile?.points ?? 0} pointRate={pointRate} />
 
         <div className="grid grid-cols-2 gap-3">
           <Link href="/child/missions">

@@ -39,9 +39,15 @@ export async function createFamily(data: Omit<Family, 'id' | 'createdAt'>): Prom
   return ref.id;
 }
 
+export async function updateFamily(familyId: string, data: Partial<Family>): Promise<void> {
+  await updateDoc(doc(familiesCol(), familyId), data);
+}
+
 export async function getFamily(familyId: string): Promise<Family | null> {
   const snap = await getDoc(doc(familiesCol(), familyId));
-  return snap.exists() ? ({ id: snap.id, ...snap.data() } as Family) : null;
+  if (!snap.exists()) return null;
+  const data = snap.data();
+  return { id: snap.id, pointRate: 1, ...data } as Family;
 }
 
 export async function getFamilyByInviteCode(code: string): Promise<Family | null> {

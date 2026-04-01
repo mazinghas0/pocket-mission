@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthChange, signOut } from '@/lib/firebase/auth';
-import { getProfile, updateProfile, getFamily } from '@/lib/firebase/db';
+import { getProfile, updateProfile, getFamily, updateFamily } from '@/lib/firebase/db';
 import { Card } from '@/components/ui/card';
 import { LevelBadge } from '@/components/ui/levelBadge';
 import { BottomNav } from '@/components/ui/bottomNav';
@@ -124,27 +124,57 @@ export default function SettingsPage() {
         <LevelBadge points={profile?.points ?? 0} />
 
         {family && (
-          <Card>
-            <h2 className="font-semibold text-gray-800 mb-3">가족 정보</h2>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">가족 이름</span>
-                <span className="text-sm font-medium text-gray-800">{family.name}</span>
+          <>
+            <Card>
+              <h2 className="font-semibold text-gray-800 mb-3">가족 정보</h2>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">가족 이름</span>
+                  <span className="text-sm font-medium text-gray-800">{family.name}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">초대 코드</span>
+                  <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">
+                    {family.inviteCode}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">구독</span>
+                  <span className="text-sm font-medium text-gray-800">
+                    {family.subscriptionStatus === 'premium' ? '프리미엄' : '무료'}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">초대 코드</span>
-                <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">
-                  {family.inviteCode}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">구독</span>
-                <span className="text-sm font-medium text-gray-800">
-                  {family.subscriptionStatus === 'premium' ? '프리미엄' : '무료'}
-                </span>
-              </div>
-            </div>
-          </Card>
+            </Card>
+
+            {profile?.role === 'parent' && (
+              <Card>
+                <h2 className="font-semibold text-gray-800 mb-3">포인트 환율 설정</h2>
+                <p className="text-xs text-gray-400 mb-3">1포인트를 몇 원으로 환산할지 설정합니다</p>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-600">1P =</span>
+                  <select
+                    value={family.pointRate}
+                    onChange={async (e) => {
+                      const rate = Number(e.target.value);
+                      await updateFamily(family.id, { pointRate: rate });
+                      setFamily({ ...family, pointRate: rate });
+                    }}
+                    className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  >
+                    <option value={1}>1원</option>
+                    <option value={5}>5원</option>
+                    <option value={10}>10원</option>
+                    <option value={50}>50원</option>
+                    <option value={100}>100원</option>
+                  </select>
+                </div>
+                <p className="text-xs text-gray-400 mt-2">
+                  예: 미션 30P = {(30 * (family.pointRate ?? 1)).toLocaleString('ko-KR')}원
+                </p>
+              </Card>
+            )}
+          </>
         )}
 
         <button

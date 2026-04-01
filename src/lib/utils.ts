@@ -10,6 +10,11 @@ export function formatPoints(points: number): string {
   return `${points.toLocaleString('ko-KR')}P`;
 }
 
+export function formatPointsWithWon(points: number, rate: number): string {
+  const won = points * rate;
+  return `${points.toLocaleString('ko-KR')}P (${won.toLocaleString('ko-KR')}원)`;
+}
+
 function toDate(value: Timestamp | string | Date): Date {
   if (typeof value === 'string') return new Date(value);
   if (value instanceof Date) return value;
