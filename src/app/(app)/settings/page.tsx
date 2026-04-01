@@ -177,6 +177,23 @@ export default function SettingsPage() {
           </>
         )}
 
+        <Card>
+          <h2 className="font-semibold text-gray-800 mb-3">의견 보내기</h2>
+          <p className="text-xs text-gray-400 mb-3">
+            앱을 사용하면서 불편한 점이나 추가했으면 하는 기능이 있으면 알려주세요
+          </p>
+          <a
+            href="mailto:mazinghas0@email.com?subject=PocketMission%20피드백&body=안녕하세요!%0A%0A[의견 종류] 불편한 점 / 추가 기능 요청 / 칭찬%0A%0A[내용]%0A여기에 작성해주세요"
+            className="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-xl transition-colors text-sm"
+          >
+            이메일로 의견 보내기
+          </a>
+        </Card>
+
+        <div className="text-center text-xs text-gray-300 py-2">
+          PocketMission v0.1.0 · Kevin AI Corp
+        </div>
+
         <button
           onClick={handleLogout}
           className="w-full bg-white border border-red-200 text-red-500 font-semibold py-3 rounded-xl hover:bg-red-50 transition-colors"
