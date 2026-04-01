@@ -1,8 +1,9 @@
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
-// Firebase Auth はクライアント側で管理するため、ミドルウェアでは静的リソースのみ除外する
-export function middleware(request: NextRequest) {
-  return NextResponse.next({ request });
+export const runtime = 'edge';
+
+export function middleware() {
+  return NextResponse.next();
 }
 
 export const config = {
