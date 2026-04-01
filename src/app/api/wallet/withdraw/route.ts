@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const runtime = 'edge';
+
 // 출금 요청은 클라이언트에서 Firebase 직접 처리
 // (createWithdrawalRequest in @/lib/firebase/db)
 export async function POST(): Promise<NextResponse> {

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getStripe } from '@/lib/stripe';
 import type Stripe from 'stripe';
 
+export const runtime = 'edge';
+
 // POST /api/stripe/webhook — Stripe Webhook 처리
 // TODO: Firebase Admin SDK 설정 후 Firestore 업데이트 연결 필요
 // FIREBASE_SERVICE_ACCOUNT_KEY 환경변수에 서비스 계정 JSON (base64) 설정

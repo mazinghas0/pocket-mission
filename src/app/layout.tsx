@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
 
+export const runtime = 'edge';
+
 export const metadata: Metadata = {
   title: 'PocketMission — 미션 기반 용돈 관리',
   description: '부모와 자녀가 함께하는 미션 기반 용돈 관리 앱',

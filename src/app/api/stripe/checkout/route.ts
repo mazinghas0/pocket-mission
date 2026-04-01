@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getStripe } from '@/lib/stripe';
 import type { ApiError } from '@/types';
 
+export const runtime = 'edge';
+
 interface CheckoutRequest {
   familyId: string;
   stripeCustomerId?: string;
