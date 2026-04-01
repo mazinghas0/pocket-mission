@@ -1,14 +1,24 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { signUp } from '@/lib/firebase/auth';
-import { createProfile } from '@/lib/firebase/db';
+import { createProfile, getFamilyByInviteCode, updateProfile } from '@/lib/firebase/db';
 import type { Role } from '@/types';
 
 export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-orange-50"><p className="text-gray-400 text-sm">로딩 중...</p></div>}>
+      <RegisterForm />
+    </Suspense>
+  );
+}
+
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const inviteCode = searchParams.get('invite');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -37,6 +47,19 @@ export default function RegisterPage() {
       setError('프로필 생성에 실패했습니다.');
       setLoading(false);
       return;
+    }
+
+    if (inviteCode) {
+      try {
+        const family = await getFamilyByInviteCode(inviteCode.toUpperCase());
+        if (family) {
+          await updateProfile(uid, { familyId: family.id });
+          router.replace(role === 'parent' ? '/parent' : '/child');
+          return;
+        }
+      } catch {
+        // 초대코드 합류 실패 시 온보딩으로 이동
+      }
     }
 
     router.replace('/onboarding');

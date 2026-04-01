@@ -1,12 +1,23 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { signIn, resetPassword } from '@/lib/firebase/auth';
+import { getProfile, getFamilyByInviteCode, updateProfile } from '@/lib/firebase/db';
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-orange-50"><p className="text-gray-400 text-sm">로딩 중...</p></div>}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const inviteCode = searchParams.get('invite');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -32,12 +43,28 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
+    let user;
     try {
-      await signIn(email, password);
+      const credential = await signIn(email, password);
+      user = credential.user;
     } catch {
       setError('이메일 또는 비밀번호가 올바르지 않습니다.');
       setLoading(false);
       return;
+    }
+
+    if (inviteCode) {
+      try {
+        const profile = await getProfile(user.uid);
+        if (profile && !profile.familyId) {
+          const family = await getFamilyByInviteCode(inviteCode.toUpperCase());
+          if (family) {
+            await updateProfile(user.uid, { familyId: family.id });
+          }
+        }
+      } catch {
+        // 초대코드 합류 실패 시 무시
+      }
     }
 
     router.replace('/');

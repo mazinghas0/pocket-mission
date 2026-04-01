@@ -22,7 +22,8 @@ export default function ParentDashboard() {
 
   async function handleCopyInviteCode() {
     if (!family) return;
-    await navigator.clipboard.writeText(family.inviteCode);
+    const url = `${window.location.origin}/invite/${family.inviteCode}`;
+    await navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -97,7 +98,7 @@ export default function ParentDashboard() {
               onClick={handleCopyInviteCode}
               className="bg-white/20 hover:bg-white/30 rounded-lg px-2 py-0.5 text-xs font-mono transition-colors"
             >
-              {copied ? '복사됨!' : family.inviteCode}
+              {copied ? '링크 복사됨!' : `초대 링크 복사`}
             </button>
             {family.subscriptionStatus === 'premium' && (
               <span className="bg-yellow-300 text-yellow-900 rounded-full px-2 py-0.5 text-xs font-semibold">
