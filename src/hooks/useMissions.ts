@@ -29,7 +29,10 @@ export function useMissions() {
         }
 
         unsubMissions = subscribeToFamilyMissions(profile.familyId, (data) => {
-          setMissions(data);
+          const filtered = profile.role === 'child'
+            ? data.filter(m => m.assignedTo === user.uid || m.assignedTo === null)
+            : data;
+          setMissions(filtered);
           setLoading(false);
         });
       } catch {

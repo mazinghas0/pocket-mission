@@ -48,9 +48,9 @@ export function MissionCard({ mission, onClick, onDelete, onEdit, showActions = 
           </div>
         )}
 
-        {showActions && mission.status === 'pending' && (
+        {showActions && (mission.status === 'pending' || mission.status === 'approved' || mission.status === 'rejected') && (
           <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2">
-            {onEdit && (
+            {onEdit && mission.status === 'pending' && (
               <button
                 onClick={(e) => { e.stopPropagation(); onEdit(mission); }}
                 className="text-xs text-gray-500 hover:text-orange-500 transition-colors"
