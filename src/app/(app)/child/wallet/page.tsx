@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useWallet } from '@/hooks/useWallet';
+import { getCurrentUser } from '@/lib/firebase/auth';
+import { createWithdrawalRequest } from '@/lib/firebase/db';
 import { PointBalance } from '@/components/wallet/pointBalance';
 import { TransactionList } from '@/components/wallet/transactionList';
 
@@ -29,23 +31,16 @@ export default function ChildWalletPage() {
     }
 
     setWithdrawing(true);
-    const response = await fetch('/api/wallet/withdraw', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ points }),
-    });
-
-    const data = await response.json() as { error?: string };
-
-    if (!response.ok) {
-      setWithdrawError(data.error ?? '출금 요청에 실패했습니다.');
-      setWithdrawing(false);
-      return;
+    try {
+      const user = getCurrentUser();
+      if (!user) throw new Error('로그인이 필요합니다.');
+      await createWithdrawalRequest(user.uid, points);
+      setWithdrawPoints('');
+      setShowWithdraw(false);
+      await refetch();
+    } catch (err) {
+      setWithdrawError(err instanceof Error ? err.message : '출금 요청에 실패했습니다.');
     }
-
-    setWithdrawPoints('');
-    setShowWithdraw(false);
-    await refetch();
     setWithdrawing(false);
   }
 
@@ -84,7 +79,6 @@ export default function ChildWalletPage() {
         )}
       </div>
 
-      {/* 출금 모달 */}
       {showWithdraw && (
         <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50">
           <div className="bg-white rounded-t-2xl w-full max-w-lg p-6">

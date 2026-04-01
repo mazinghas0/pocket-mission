@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
+import { onAuthChange } from '@/lib/firebase/auth';
+import { getProfile, subscribeToFamilyMissions } from '@/lib/firebase/db';
 import type { Mission } from '@/types';
 
 export function useMissions() {
@@ -8,22 +10,39 @@ export function useMissions() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const fetchMissions = useCallback(async () => {
-    setLoading(true);
-    const response = await fetch('/api/missions');
-    const data = await response.json() as Mission[] | { error: string };
+  useEffect(() => {
+    let unsubMissions: (() => void) | null = null;
 
-    if (!response.ok) {
-      setError((data as { error: string }).error ?? '미션을 불러오지 못했습니다.');
-    } else {
-      setMissions(data as Mission[]);
-    }
-    setLoading(false);
+    const unsubAuth = onAuthChange(async (user) => {
+      if (!user) {
+        setMissions([]);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const profile = await getProfile(user.uid);
+        if (!profile?.familyId) {
+          setMissions([]);
+          setLoading(false);
+          return;
+        }
+
+        unsubMissions = subscribeToFamilyMissions(profile.familyId, (data) => {
+          setMissions(data);
+          setLoading(false);
+        });
+      } catch {
+        setError('미션을 불러오지 못했습니다.');
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      unsubAuth();
+      unsubMissions?.();
+    };
   }, []);
 
-  useEffect(() => {
-    fetchMissions();
-  }, [fetchMissions]);
-
-  return { missions, loading, error, refetch: fetchMissions };
+  return { missions, loading, error };
 }

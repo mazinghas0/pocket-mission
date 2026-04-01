@@ -1,80 +1,63 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
+import { onAuthChange } from '@/lib/firebase/auth';
+import {
+  getProfile, getPendingFamilySubmissions,
+  approveSubmission, rejectSubmission,
+} from '@/lib/firebase/db';
 import { SubmissionCard } from '@/components/missions/submissionCard';
 import type { SubmissionWithDetails } from '@/types';
 
 export default function ApprovalsPage() {
+  const router = useRouter();
   const [submissions, setSubmissions] = useState<SubmissionWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [parentUid, setParentUid] = useState('');
+  const [familyId, setFamilyId] = useState('');
 
-  const fetchSubmissions = useCallback(async () => {
+  const fetchSubmissions = useCallback(async (fid: string) => {
     setLoading(true);
-    const supabase = createClient();
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('family_id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (!profile?.family_id) return;
-
-    const { data } = await supabase
-      .from('mission_submissions')
-      .select(`
-        *,
-        mission:missions(*),
-        child_profile:profiles!child_id(*)
-      `)
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false });
-
-    setSubmissions((data as SubmissionWithDetails[]) ?? []);
+    const data = await getPendingFamilySubmissions(fid);
+    setSubmissions(data);
     setLoading(false);
   }, []);
 
   useEffect(() => {
-    fetchSubmissions();
-  }, [fetchSubmissions]);
+    const unsub = onAuthChange(async (user) => {
+      if (!user) { router.push('/login'); return; }
+      const profile = await getProfile(user.uid);
+      if (!profile?.familyId || profile.role !== 'parent') { router.push('/parent'); return; }
+      setParentUid(user.uid);
+      setFamilyId(profile.familyId);
+      await fetchSubmissions(profile.familyId);
+    });
+    return () => unsub();
+  }, [router, fetchSubmissions]);
 
   async function handleApprove(submissionId: string) {
     setProcessing(true);
-    const response = await fetch(`/api/submissions/${submissionId}/review`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'approve' }),
-    });
-
-    if (response.ok) {
-      await fetchSubmissions();
-    }
+    const sub = submissions.find(s => s.id === submissionId);
+    if (!sub?.mission) { setProcessing(false); return; }
+    await approveSubmission(sub.mission.id, submissionId, sub.childId, sub.mission.points, parentUid);
+    await fetchSubmissions(familyId);
     setProcessing(false);
   }
 
   async function handleReject(submissionId: string) {
     if (!rejectReason.trim()) return;
     setProcessing(true);
-
-    const response = await fetch(`/api/submissions/${submissionId}/review`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'reject', reason: rejectReason }),
-    });
-
-    if (response.ok) {
-      setRejectTarget(null);
-      setRejectReason('');
-      await fetchSubmissions();
-    }
+    const sub = submissions.find(s => s.id === submissionId);
+    if (!sub?.mission) { setProcessing(false); return; }
+    await rejectSubmission(sub.mission.id, submissionId, parentUid, rejectReason);
+    setRejectTarget(null);
+    setRejectReason('');
+    await fetchSubmissions(familyId);
     setProcessing(false);
   }
 
@@ -108,7 +91,6 @@ export default function ApprovalsPage() {
         )}
       </div>
 
-      {/* 반려 모달 */}
       {rejectTarget && (
         <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50">
           <div className="bg-white rounded-t-2xl w-full max-w-lg p-6">

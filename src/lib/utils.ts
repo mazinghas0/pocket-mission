@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import type { Timestamp } from 'firebase/firestore';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -9,16 +10,22 @@ export function formatPoints(points: number): string {
   return `${points.toLocaleString('ko-KR')}P`;
 }
 
-export function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('ko-KR', {
+function toDate(value: Timestamp | string | Date): Date {
+  if (typeof value === 'string') return new Date(value);
+  if (value instanceof Date) return value;
+  return value.toDate();
+}
+
+export function formatDate(value: Timestamp | string | Date): string {
+  return toDate(value).toLocaleDateString('ko-KR', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   });
 }
 
-export function formatDateTime(dateString: string): string {
-  return new Date(dateString).toLocaleString('ko-KR', {
+export function formatDateTime(value: Timestamp | string | Date): string {
+  return toDate(value).toLocaleString('ko-KR', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

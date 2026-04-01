@@ -1,6 +1,7 @@
 // ============================================================
-// PocketMission 공통 타입 정의
+// PocketMission 공통 타입 정의 (Firebase Firestore 기반)
 // ============================================================
+import type { Timestamp } from 'firebase/firestore';
 
 export type Role = 'parent' | 'child';
 export type SubscriptionStatus = 'free' | 'premium';
@@ -12,86 +13,84 @@ export type WithdrawalStatus = 'pending' | 'approved';
 export interface Family {
   id: string;
   name: string;
-  invite_code: string;
-  subscription_status: SubscriptionStatus;
-  stripe_customer_id: string | null;
-  created_at: string;
+  inviteCode: string;
+  subscriptionStatus: SubscriptionStatus;
+  stripeCustomerId?: string;
+  createdAt: Timestamp;
 }
 
 export interface Profile {
   id: string;
-  user_id: string;
-  family_id: string | null;
+  familyId: string | null;
   role: Role;
   name: string;
   points: number;
-  created_at: string;
+  createdAt: Timestamp;
 }
 
 export interface MissionTemplate {
   id: string;
   title: string;
   description: string;
-  default_points: number;
+  defaultPoints: number;
   category: string;
-  created_at: string;
 }
 
 export interface Mission {
   id: string;
-  family_id: string;
-  created_by: string;
-  assigned_to: string | null;
+  familyId: string;
+  createdBy: string;
+  assignedTo: string | null;
   title: string;
   description: string;
   points: number;
-  template_id: string | null;
+  templateId?: string;
   status: MissionStatus;
-  due_date: string | null;
-  is_recurring: boolean;
-  created_at: string;
+  dueDate?: Timestamp;
+  isRecurring: boolean;
+  createdAt: Timestamp;
 }
 
 export interface MissionWithProfile extends Mission {
-  assigned_profile?: Profile;
+  assignedProfile?: Profile;
 }
 
 export interface MissionSubmission {
   id: string;
-  mission_id: string;
-  child_id: string;
-  photo_url: string;
+  missionId: string;
+  childId: string;
+  photoUrl: string;
   memo: string;
   status: SubmissionStatus;
-  rejection_reason: string | null;
-  reviewed_by: string | null;
-  reviewed_at: string | null;
-  created_at: string;
+  rejectionReason?: string;
+  reviewedBy?: string;
+  reviewedAt?: Timestamp;
+  createdAt: Timestamp;
 }
 
 export interface SubmissionWithDetails extends MissionSubmission {
   mission?: Mission;
-  child_profile?: Profile;
+  childProfile?: Profile;
 }
 
 export interface PointTransaction {
   id: string;
-  profile_id: string;
+  profileId: string;
   amount: number;
   type: TransactionType;
-  mission_id: string | null;
+  missionId?: string;
   description: string;
-  created_at: string;
+  createdAt: Timestamp;
 }
 
 export interface WithdrawalRequest {
   id: string;
-  child_id: string;
+  childId: string;
   points: number;
   status: WithdrawalStatus;
-  approved_by: string | null;
-  approved_at: string | null;
-  created_at: string;
+  approvedBy?: string;
+  approvedAt?: Timestamp;
+  createdAt: Timestamp;
 }
 
 // API 요청/응답 타입

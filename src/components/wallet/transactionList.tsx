@@ -39,7 +39,7 @@ export function TransactionList({ transactions }: TransactionListProps) {
             <p className="text-sm font-medium text-gray-800">
               {tx.description || getTransactionLabel(tx.type)}
             </p>
-            <p className="text-xs text-gray-400 mt-0.5">{formatDateTime(tx.created_at)}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{formatDateTime(tx.createdAt)}</p>
           </div>
           <span className={`font-bold text-sm ${getTransactionColor(tx.type, tx.amount)}`}>
             {tx.amount > 0 ? '+' : ''}{formatPoints(tx.amount)}

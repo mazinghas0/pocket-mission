@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { nanoid } from 'nanoid';
+import { getCurrentUser } from '@/lib/firebase/auth';
+import { createFamily, getFamilyByInviteCode, getProfile, updateProfile } from '@/lib/firebase/db';
 
 type Step = 'choice' | 'create' | 'join';
 
@@ -18,22 +21,23 @@ export default function OnboardingPage() {
     setError('');
     setLoading(true);
 
-    const response = await fetch('/api/families', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: familyName }),
-    });
+    try {
+      const user = getCurrentUser();
+      if (!user) throw new Error('로그인이 필요합니다.');
 
-    const data = await response.json() as { id?: string; invite_code?: string; error?: string };
+      const code = nanoid(6).toUpperCase();
+      const familyId = await createFamily({
+        name: familyName,
+        inviteCode: code,
+        subscriptionStatus: 'free',
+      });
 
-    if (!response.ok) {
-      setError(data.error ?? '가족 생성에 실패했습니다.');
+      await updateProfile(user.uid, { familyId });
+      router.push('/parent');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '가족 생성에 실패했습니다.');
       setLoading(false);
-      return;
     }
-
-    router.push('/parent');
-    router.refresh();
   }
 
   async function handleJoin(e: React.FormEvent) {
@@ -41,22 +45,21 @@ export default function OnboardingPage() {
     setError('');
     setLoading(true);
 
-    const response = await fetch('/api/families/join', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ invite_code: inviteCode }),
-    });
+    try {
+      const user = getCurrentUser();
+      if (!user) throw new Error('로그인이 필요합니다.');
 
-    const data = await response.json() as { family_id?: string; error?: string };
+      const family = await getFamilyByInviteCode(inviteCode.toUpperCase());
+      if (!family) throw new Error('초대코드가 올바르지 않습니다.');
 
-    if (!response.ok) {
-      setError(data.error ?? '가족 참여에 실패했습니다.');
+      const profile = await getProfile(user.uid);
+      await updateProfile(user.uid, { familyId: family.id });
+
+      router.push(profile?.role === 'parent' ? '/parent' : '/child');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '가족 참여에 실패했습니다.');
       setLoading(false);
-      return;
     }
-
-    router.push('/child');
-    router.refresh();
   }
 
   if (step === 'choice') {

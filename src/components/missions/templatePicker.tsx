@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { getMissionTemplates } from '@/lib/firebase/db';
 import type { MissionTemplate } from '@/types';
 
 interface TemplatePickerProps {
@@ -13,15 +13,10 @@ export function TemplatePicker({ onSelect }: TemplatePickerProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase
-      .from('mission_templates')
-      .select('*')
-      .order('category')
-      .then(({ data }) => {
-        setTemplates(data ?? []);
-        setLoading(false);
-      });
+    getMissionTemplates().then((data) => {
+      setTemplates(data);
+      setLoading(false);
+    });
   }, []);
 
   if (loading) {
@@ -38,7 +33,7 @@ export function TemplatePicker({ onSelect }: TemplatePickerProps) {
           className="bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-xl p-3 text-left transition-colors"
         >
           <p className="font-medium text-gray-800 text-sm">{template.title}</p>
-          <p className="text-orange-600 text-xs font-semibold mt-1">{template.default_points}P</p>
+          <p className="text-orange-600 text-xs font-semibold mt-1">{template.defaultPoints}P</p>
           <p className="text-gray-400 text-xs mt-0.5">{template.category}</p>
         </button>
       ))}

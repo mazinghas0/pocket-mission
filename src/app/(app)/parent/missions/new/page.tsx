@@ -4,7 +4,10 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { TemplatePicker } from '@/components/missions/templatePicker';
-import type { MissionTemplate, CreateMissionRequest } from '@/types';
+import { getCurrentUser } from '@/lib/firebase/auth';
+import { getProfile, createMission } from '@/lib/firebase/db';
+import { Timestamp } from 'firebase/firestore';
+import type { MissionTemplate } from '@/types';
 
 type Mode = 'select' | 'form';
 
@@ -23,7 +26,7 @@ export default function NewMissionPage() {
   function handleTemplateSelect(template: MissionTemplate) {
     setTitle(template.title);
     setDescription(template.description);
-    setPoints(template.default_points);
+    setPoints(template.defaultPoints);
     setTemplateId(template.id);
     setMode('form');
   }
@@ -33,31 +36,32 @@ export default function NewMissionPage() {
     setError('');
     setLoading(true);
 
-    const body: CreateMissionRequest = {
-      title,
-      description,
-      points,
-      is_recurring: isRecurring,
-      ...(dueDate && { due_date: new Date(dueDate).toISOString() }),
-      ...(templateId && { template_id: templateId }),
-    };
+    try {
+      const user = getCurrentUser();
+      if (!user) throw new Error('로그인이 필요합니다.');
 
-    const response = await fetch('/api/missions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+      const profile = await getProfile(user.uid);
+      if (!profile?.familyId) throw new Error('가족이 연결되지 않았습니다.');
 
-    const data = await response.json() as { error?: string };
+      await createMission({
+        familyId: profile.familyId,
+        createdBy: user.uid,
+        assignedTo: null,
+        title,
+        description,
+        points,
+        isRecurring,
+        status: 'pending',
+        ...(dueDate && { dueDate: Timestamp.fromDate(new Date(dueDate)) }),
+        ...(templateId && { templateId }),
+      });
 
-    if (!response.ok) {
-      setError(data.error ?? '미션 생성에 실패했습니다.');
+      router.push('/parent/missions');
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '미션 생성에 실패했습니다.');
       setLoading(false);
-      return;
     }
-
-    router.push('/parent/missions');
-    router.refresh();
   }
 
   if (mode === 'select') {

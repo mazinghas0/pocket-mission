@@ -10,36 +10,38 @@ interface MissionCardProps {
 
 export function MissionCard({ mission, onClick }: MissionCardProps) {
   return (
-    <Card
-      className={`cursor-pointer hover:shadow-md transition-shadow ${onClick ? 'active:scale-[0.99]' : ''}`}
+    <div
+      className={onClick ? 'cursor-pointer active:scale-[0.99]' : ''}
       onClick={onClick}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-800 truncate">{mission.title}</h3>
-          {mission.description && (
-            <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{mission.description}</p>
-          )}
-          {mission.due_date && (
-            <p className="text-xs text-gray-400 mt-1">마감: {formatDate(mission.due_date)}</p>
-          )}
+      <Card className="hover:shadow-md transition-shadow">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-gray-800 truncate">{mission.title}</h3>
+            {mission.description && (
+              <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{mission.description}</p>
+            )}
+            {mission.dueDate && (
+              <p className="text-xs text-gray-400 mt-1">마감: {formatDate(mission.dueDate)}</p>
+            )}
+          </div>
+
+          <div className="flex flex-col items-end gap-2 shrink-0">
+            <Badge className={getMissionStatusColor(mission.status)}>
+              {getMissionStatusLabel(mission.status)}
+            </Badge>
+            <span className="text-orange-600 font-bold text-sm">
+              {formatPoints(mission.points)}
+            </span>
+          </div>
         </div>
 
-        <div className="flex flex-col items-end gap-2 shrink-0">
-          <Badge className={getMissionStatusColor(mission.status)}>
-            {getMissionStatusLabel(mission.status)}
-          </Badge>
-          <span className="text-orange-600 font-bold text-sm">
-            {formatPoints(mission.points)}
-          </span>
-        </div>
-      </div>
-
-      {mission.is_recurring && (
-        <div className="mt-2">
-          <Badge className="bg-blue-50 text-blue-600">반복</Badge>
-        </div>
-      )}
-    </Card>
+        {mission.isRecurring && (
+          <div className="mt-2">
+            <Badge className="bg-blue-50 text-blue-600">반복</Badge>
+          </div>
+        )}
+      </Card>
+    </div>
   );
 }

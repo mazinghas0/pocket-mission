@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
+import { getCurrentUser } from '@/lib/firebase/auth';
+import { getMission, createSubmission } from '@/lib/firebase/db';
+import { uploadMissionPhoto } from '@/lib/firebase/storage';
 import { Badge } from '@/components/ui/badge';
 import { getMissionStatusLabel, getMissionStatusColor, formatPoints } from '@/lib/utils';
 import type { Mission } from '@/types';
@@ -20,16 +22,10 @@ export default function MissionSubmitPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase
-      .from('missions')
-      .select('*')
-      .eq('id', id)
-      .single()
-      .then(({ data }) => {
-        setMission(data);
-        setLoading(false);
-      });
+    getMission(id).then((data) => {
+      setMission(data);
+      setLoading(false);
+    });
   }, [id]);
 
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -41,48 +37,32 @@ export default function MissionSubmitPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!photoFile) {
+    if (!photoFile || !mission) {
       setError('인증 사진을 선택해주세요.');
       return;
     }
     setError('');
     setSubmitting(true);
 
-    const supabase = createClient();
+    try {
+      const user = getCurrentUser();
+      if (!user) throw new Error('로그인이 필요합니다.');
 
-    // 1. Supabase Storage에 사진 업로드
-    const fileName = `${id}/${Date.now()}-${photoFile.name}`;
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('mission-photos')
-      .upload(fileName, photoFile, { cacheControl: '3600', upsert: false });
+      const photoUrl = await uploadMissionPhoto(mission.familyId, id, photoFile);
 
-    if (uploadError) {
-      setError('사진 업로드에 실패했습니다.');
+      await createSubmission(id, {
+        missionId: id,
+        childId: user.uid,
+        photoUrl,
+        memo,
+        status: 'pending',
+      });
+
+      router.push('/child/missions');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '인증 제출에 실패했습니다.');
       setSubmitting(false);
-      return;
     }
-
-    const { data: urlData } = supabase.storage
-      .from('mission-photos')
-      .getPublicUrl(uploadData.path);
-
-    // 2. API 제출
-    const response = await fetch(`/api/missions/${id}/submit`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ photo_url: urlData.publicUrl, memo }),
-    });
-
-    const data = await response.json() as { error?: string };
-
-    if (!response.ok) {
-      setError(data.error ?? '인증 제출에 실패했습니다.');
-      setSubmitting(false);
-      return;
-    }
-
-    router.push('/child/missions');
-    router.refresh();
   }
 
   if (loading) {
@@ -111,7 +91,6 @@ export default function MissionSubmitPage() {
       </div>
 
       <div className="px-4 mt-4 space-y-4">
-        {/* 미션 정보 */}
         <div className="bg-white rounded-2xl p-5 shadow-sm">
           <div className="flex items-start justify-between gap-2 mb-2">
             <h2 className="font-bold text-gray-800 text-lg flex-1">{mission.title}</h2>
@@ -128,7 +107,6 @@ export default function MissionSubmitPage() {
           </div>
         </div>
 
-        {/* 인증 폼 */}
         {canSubmit ? (
           <div className="bg-white rounded-2xl p-5 shadow-sm">
             <h3 className="font-semibold text-gray-800 mb-4">인증하기</h3>

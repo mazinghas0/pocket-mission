@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
+import { signUp } from '@/lib/firebase/auth';
+import { createProfile } from '@/lib/firebase/db';
 import type { Role } from '@/types';
 
 export default function RegisterPage() {
@@ -20,40 +21,19 @@ export default function RegisterPage() {
     setError('');
     setLoading(true);
 
-    const supabase = createClient();
-
-    // 1. Supabase Auth 회원가입
-    const { data: authData, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
-      },
-    });
-
-    if (signUpError) {
-      setError(signUpError.message);
-      setLoading(false);
-      return;
-    }
-
-    if (!authData.user) {
+    let uid: string;
+    try {
+      const credential = await signUp(email, password);
+      uid = credential.user.uid;
+    } catch {
       setError('회원가입에 실패했습니다.');
       setLoading(false);
       return;
     }
 
-    // 2. 프로필 생성
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert({
-        user_id: authData.user.id,
-        name: name.trim(),
-        role,
-        points: 0,
-      });
-
-    if (profileError) {
+    try {
+      await createProfile(uid, { name: name.trim(), role, familyId: null, points: 0 });
+    } catch {
       setError('프로필 생성에 실패했습니다.');
       setLoading(false);
       return;

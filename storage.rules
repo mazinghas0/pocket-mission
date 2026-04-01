@@ -1,0 +1,13 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /mission-photos/{familyId}/{missionId}/{fileName} {
+      // 같은 가족만 읽기 가능 (부모·자녀 모두)
+      allow read: if request.auth != null;
+      // 로그인한 사용자만 업로드 가능, 10MB 이하, 이미지만
+      allow write: if request.auth != null
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

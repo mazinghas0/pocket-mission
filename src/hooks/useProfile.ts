@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { onAuthChange } from '@/lib/firebase/auth';
+import { getProfile } from '@/lib/firebase/db';
 import type { Profile } from '@/types';
 
 export function useProfile() {
@@ -9,24 +10,17 @@ export function useProfile() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const supabase = createClient();
-
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    const unsub = onAuthChange(async (user) => {
       if (!user) {
+        setProfile(null);
         setLoading(false);
         return;
       }
-
-      supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
-        .then(({ data }) => {
-          setProfile(data);
-          setLoading(false);
-        });
+      const data = await getProfile(user.uid);
+      setProfile(data);
+      setLoading(false);
     });
+    return () => unsub();
   }, []);
 
   return { profile, loading };

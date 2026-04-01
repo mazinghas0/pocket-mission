@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
+import { signIn } from '@/lib/firebase/auth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,13 +17,9 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (authError) {
+    try {
+      await signIn(email, password);
+    } catch {
       setError('이메일 또는 비밀번호가 올바르지 않습니다.');
       setLoading(false);
       return;

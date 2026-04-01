@@ -1,58 +1,71 @@
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
+import { onAuthChange } from '@/lib/firebase/auth';
+import { getProfile, getFamily, getFamilyMembers, subscribeToPendingSubmissions } from '@/lib/firebase/db';
 import { Card } from '@/components/ui/card';
 import { UpgradeBanner } from '@/components/ui/upgradeBanner';
 import { formatPoints } from '@/lib/utils';
+import type { Profile, Family } from '@/types';
 
-export default async function ParentDashboard() {
-  const supabase = createClient();
+export default function ParentDashboard() {
+  const router = useRouter();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [family, setFamily] = useState<Family | null>(null);
+  const [children, setChildren] = useState<Profile[]>([]);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  useEffect(() => {
+    let unsubMissions: (() => void) | null = null;
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, family_id, name, role')
-    .eq('user_id', user.id)
-    .single();
+    const unsubAuth = onAuthChange(async (user) => {
+      if (!user) { router.push('/login'); return; }
 
-  if (!profile?.family_id) redirect('/onboarding');
-  if (profile.role !== 'parent') redirect('/child');
+      const p = await getProfile(user.uid);
+      if (!p?.familyId) { router.push('/onboarding'); return; }
+      if (p.role !== 'parent') { router.push('/child'); return; }
 
-  // 인증 대기 수
-  const { count: pendingCount } = await supabase
-    .from('mission_submissions')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'pending');
+      setProfile(p);
 
-  // 자녀 목록과 포인트
-  const { data: children } = await supabase
-    .from('profiles')
-    .select('id, name, points')
-    .eq('family_id', profile.family_id)
-    .eq('role', 'child');
+      const [fam, members] = await Promise.all([
+        getFamily(p.familyId),
+        getFamilyMembers(p.familyId),
+      ]);
+      setFamily(fam);
+      setChildren(members.filter(m => m.role === 'child'));
+      setLoading(false);
 
-  // 가족 정보 (초대코드)
-  const { data: family } = await supabase
-    .from('families')
-    .select('name, invite_code, subscription_status')
-    .eq('id', profile.family_id)
-    .single();
+      unsubMissions = subscribeToPendingSubmissions(p.familyId, (missions) => {
+        setPendingCount(missions.length);
+      });
+    });
+
+    return () => { unsubAuth(); unsubMissions?.(); };
+  }, [router]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-orange-50 flex items-center justify-center">
+        <p className="text-gray-400 text-sm">불러오는 중...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-orange-50 pb-20">
-      {/* 헤더 */}
       <div className="bg-gradient-to-br from-orange-500 to-orange-600 px-4 pt-12 pb-8 text-white">
         <p className="text-orange-100 text-sm">안녕하세요,</p>
-        <h1 className="text-2xl font-bold mt-1">{profile.name} 님</h1>
+        <h1 className="text-2xl font-bold mt-1">{profile?.name} 님</h1>
         {family && (
           <div className="flex items-center gap-2 mt-3">
             <span className="text-orange-100 text-sm">{family.name}</span>
             <span className="bg-white/20 rounded-lg px-2 py-0.5 text-xs font-mono">
-              {family.invite_code}
+              {family.inviteCode}
             </span>
-            {family.subscription_status === 'premium' && (
+            {family.subscriptionStatus === 'premium' && (
               <span className="bg-yellow-300 text-yellow-900 rounded-full px-2 py-0.5 text-xs font-semibold">
                 프리미엄
               </span>
@@ -62,11 +75,10 @@ export default async function ParentDashboard() {
       </div>
 
       <div className="px-4 -mt-4 space-y-4">
-        {/* 빠른 메뉴 */}
         <div className="grid grid-cols-2 gap-3">
           <Link href="/parent/approvals">
             <Card className="text-center py-5 hover:shadow-md transition-shadow relative">
-              {(pendingCount ?? 0) > 0 && (
+              {pendingCount > 0 && (
                 <span className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                   {pendingCount}
                 </span>
@@ -74,7 +86,7 @@ export default async function ParentDashboard() {
               <div className="text-3xl mb-1">✅</div>
               <p className="text-sm font-semibold text-gray-700">인증 승인</p>
               <p className="text-xs text-gray-400 mt-0.5">
-                {(pendingCount ?? 0) > 0 ? `${pendingCount}건 대기중` : '대기 없음'}
+                {pendingCount > 0 ? `${pendingCount}건 대기중` : '대기 없음'}
               </p>
             </Card>
           </Link>
@@ -104,8 +116,7 @@ export default async function ParentDashboard() {
           </Link>
         </div>
 
-        {/* 자녀 포인트 요약 */}
-        {children && children.length > 0 && (
+        {children.length > 0 && (
           <Card>
             <h2 className="font-semibold text-gray-800 mb-3">자녀 포인트 현황</h2>
             <div className="space-y-2">
@@ -121,10 +132,7 @@ export default async function ParentDashboard() {
           </Card>
         )}
 
-        {/* 프리미엄 업그레이드 배너 */}
-        {family?.subscription_status === 'free' && (
-          <UpgradeBanner />
-        )}
+        {family?.subscriptionStatus === 'free' && <UpgradeBanner />}
       </div>
     </div>
   );

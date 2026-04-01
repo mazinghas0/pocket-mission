@@ -1,20 +1,7 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
 
-// GET /api/auth/callback — Supabase 이메일 인증 콜백
+// Firebase Auth 사용으로 이 엔드포인트는 더 이상 필요하지 않습니다.
 export async function GET(request: Request): Promise<NextResponse> {
-  const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/';
-
-  if (code) {
-    const supabase = createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-    if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
-    }
-  }
-
-  return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`);
+  const { origin } = new URL(request.url);
+  return NextResponse.redirect(`${origin}/`);
 }

@@ -1,29 +1,32 @@
-import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+'use client';
 
-// 루트 페이지: 인증 상태 + 역할에 따라 적절한 페이지로 리다이렉트
-export default async function RootPage() {
-  const supabase = createClient();
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { onAuthChange } from '@/lib/firebase/auth';
+import { getProfile } from '@/lib/firebase/db';
 
-  const { data: { user } } = await supabase.auth.getUser();
+export default function RootPage() {
+  const router = useRouter();
 
-  if (!user) {
-    redirect('/login');
-  }
+  useEffect(() => {
+    const unsub = onAuthChange(async (user) => {
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+      const profile = await getProfile(user.uid);
+      if (!profile || !profile.familyId) {
+        router.push('/onboarding');
+        return;
+      }
+      router.push(profile.role === 'parent' ? '/parent' : '/child');
+    });
+    return () => unsub();
+  }, [router]);
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('family_id, role')
-    .eq('user_id', user.id)
-    .single();
-
-  if (!profile || !profile.family_id) {
-    redirect('/onboarding');
-  }
-
-  if (profile.role === 'parent') {
-    redirect('/parent');
-  } else {
-    redirect('/child');
-  }
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-orange-50">
+      <p className="text-gray-400 text-sm">로딩 중...</p>
+    </div>
+  );
 }

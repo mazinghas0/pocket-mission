@@ -18,7 +18,7 @@ export function SubmissionCard({ submission, onApprove, onReject }: SubmissionCa
             {submission.mission?.title ?? '미션'}
           </h3>
           <p className="text-xs text-gray-500 mt-0.5">
-            {submission.child_profile?.name} · {formatDateTime(submission.created_at)}
+            {submission.childProfile?.name} · {formatDateTime(submission.createdAt)}
           </p>
         </div>
         {submission.mission && (
@@ -28,10 +28,10 @@ export function SubmissionCard({ submission, onApprove, onReject }: SubmissionCa
         )}
       </div>
 
-      {submission.photo_url && (
+      {submission.photoUrl && (
         <div className="relative w-full h-48 rounded-xl overflow-hidden mb-3">
           <Image
-            src={submission.photo_url}
+            src={submission.photoUrl}
             alt="인증 사진"
             fill
             className="object-cover"
@@ -62,9 +62,9 @@ export function SubmissionCard({ submission, onApprove, onReject }: SubmissionCa
         </div>
       )}
 
-      {submission.status === 'rejected' && submission.rejection_reason && (
+      {submission.status === 'rejected' && submission.rejectionReason && (
         <p className="text-sm text-red-500 bg-red-50 rounded-xl px-3 py-2">
-          반려 사유: {submission.rejection_reason}
+          반려 사유: {submission.rejectionReason}
         </p>
       )}
 

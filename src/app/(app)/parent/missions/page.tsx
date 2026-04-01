@@ -1,6 +1,10 @@
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
+import { onAuthChange } from '@/lib/firebase/auth';
+import { getProfile, subscribeToFamilyMissions } from '@/lib/firebase/db';
 import { MissionCard } from '@/components/missions/missionCard';
 import type { Mission, MissionStatus } from '@/types';
 
@@ -12,36 +16,35 @@ const STATUS_FILTERS: Array<{ label: string; value: MissionStatus | 'all' }> = [
   { label: '완료', value: 'approved' },
 ];
 
-interface PageProps {
-  searchParams: { status?: string };
-}
+export default function ParentMissionsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const statusFilter = (searchParams.get('status') ?? 'all') as MissionStatus | 'all';
 
-export default async function ParentMissionsPage({ searchParams }: PageProps) {
-  const supabase = createClient();
+  const [missions, setMissions] = useState<Mission[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  useEffect(() => {
+    let unsubMissions: (() => void) | null = null;
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, family_id, role')
-    .eq('user_id', user.id)
-    .single();
+    const unsubAuth = onAuthChange(async (user) => {
+      if (!user) { router.push('/login'); return; }
 
-  if (!profile?.family_id || profile.role !== 'parent') redirect('/parent');
+      const profile = await getProfile(user.uid);
+      if (!profile?.familyId || profile.role !== 'parent') { router.push('/parent'); return; }
 
-  let query = supabase
-    .from('missions')
-    .select('*')
-    .eq('family_id', profile.family_id)
-    .order('created_at', { ascending: false });
+      unsubMissions = subscribeToFamilyMissions(profile.familyId, (data) => {
+        setMissions(data);
+        setLoading(false);
+      });
+    });
 
-  const statusFilter = searchParams.status as MissionStatus | undefined;
-  if (statusFilter && statusFilter !== 'all') {
-    query = query.eq('status', statusFilter);
-  }
+    return () => { unsubAuth(); unsubMissions?.(); };
+  }, [router]);
 
-  const { data: missions } = await query;
+  const filtered = statusFilter === 'all'
+    ? missions
+    : missions.filter(m => m.status === statusFilter);
 
   return (
     <div className="min-h-screen bg-orange-50 pb-20">
@@ -58,7 +61,7 @@ export default async function ParentMissionsPage({ searchParams }: PageProps) {
               key={filter.value}
               href={filter.value === 'all' ? '/parent/missions' : `/parent/missions?status=${filter.value}`}
               className={`shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                (statusFilter ?? 'all') === filter.value
+                statusFilter === filter.value
                   ? 'bg-orange-500 text-white'
                   : 'bg-gray-100 text-gray-600'
               }`}
@@ -70,7 +73,9 @@ export default async function ParentMissionsPage({ searchParams }: PageProps) {
       </div>
 
       <div className="px-4 mt-4 space-y-3">
-        {(missions ?? []).length === 0 ? (
+        {loading ? (
+          <p className="text-center text-gray-400 py-10 text-sm">불러오는 중...</p>
+        ) : filtered.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
             <div className="text-4xl mb-3">📋</div>
             <p className="text-sm">미션이 없습니다</p>
@@ -79,7 +84,7 @@ export default async function ParentMissionsPage({ searchParams }: PageProps) {
             </Link>
           </div>
         ) : (
-          (missions as Mission[]).map((mission) => (
+          filtered.map((mission) => (
             <MissionCard key={mission.id} mission={mission} />
           ))
         )}

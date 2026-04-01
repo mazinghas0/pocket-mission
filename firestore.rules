@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 로그인 여부 확인
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // 프로필 조회
+    function getProfile(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
+    }
+
+    // 같은 가족인지 확인
+    function isSameFamily(familyId) {
+      return isAuth() && getProfile(request.auth.uid).familyId == familyId;
+    }
+
+    // 부모 역할인지 확인
+    function isParent() {
+      return isAuth() && getProfile(request.auth.uid).role == 'parent';
+    }
+
+    // 사용자 프로필
+    match /users/{uid} {
+      allow read: if isAuth();
+      allow create: if request.auth.uid == uid;
+      allow update: if request.auth.uid == uid;
+    }
+
+    // 가족
+    match /families/{familyId} {
+      allow read: if isSameFamily(familyId);
+      allow create: if isAuth();
+      allow update: if isSameFamily(familyId) && isParent();
+    }
+
+    // 미션
+    match /missions/{missionId} {
+      allow read: if isAuth() && isSameFamily(resource.data.familyId);
+      allow create: if isAuth() && isParent() && isSameFamily(request.resource.data.familyId);
+      allow update: if isAuth() && isSameFamily(resource.data.familyId);
+
+      // 미션 인증(제출)
+      match /submissions/{submissionId} {
+        allow read: if isAuth() && isSameFamily(get(/databases/$(database)/documents/missions/$(missionId)).data.familyId);
+        allow create: if isAuth() && request.auth.uid == request.resource.data.childId;
+        allow update: if isAuth() && isParent();
+      }
+    }
+
+    // 포인트 거래 내역
+    match /transactions/{txId} {
+      allow read: if isAuth() && request.auth.uid == resource.data.profileId;
+      allow create: if false; // 서버(Firebase Functions) 또는 trusted client만 허용
+    }
+
+    // 출금 요청
+    match /withdrawal_requests/{reqId} {
+      allow read: if isAuth();
+      allow create: if isAuth() && request.auth.uid == request.resource.data.childId;
+      allow update: if isAuth() && isParent();
+    }
+
+    // 미션 템플릿 (읽기 전용)
+    match /mission_templates/{templateId} {
+      allow read: if isAuth();
+      allow write: if false;
+    }
+  }
+}
