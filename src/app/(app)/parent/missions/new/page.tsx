@@ -57,7 +57,6 @@ export default function NewMissionPage() {
       });
 
       router.push('/parent/missions');
-      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : '미션 생성에 실패했습니다.');
       setLoading(false);

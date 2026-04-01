@@ -40,7 +40,6 @@ export default function RegisterPage() {
     }
 
     router.push('/onboarding');
-    router.refresh();
   }
 
   return (
