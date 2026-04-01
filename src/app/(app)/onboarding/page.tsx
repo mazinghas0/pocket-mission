@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { nanoid } from 'nanoid';
-import { getCurrentUser } from '@/lib/firebase/auth';
+import { getCurrentUser, signOut } from '@/lib/firebase/auth';
 import { createFamily, getFamilyByInviteCode, getProfile, updateProfile } from '@/lib/firebase/db';
 
 type Step = 'choice' | 'create' | 'join';
@@ -90,6 +90,13 @@ export default function OnboardingPage() {
               <div className="text-2xl mb-2">🔑</div>
               <p className="font-semibold text-gray-800">초대코드로 참여</p>
               <p className="text-sm text-gray-500 mt-1">부모님께 받은 코드가 있다면</p>
+            </button>
+
+            <button
+              onClick={async () => { await signOut(); router.replace('/login'); }}
+              className="w-full text-center text-sm text-gray-400 hover:text-red-500 py-3 transition-colors"
+            >
+              로그아웃
             </button>
           </div>
         </div>
