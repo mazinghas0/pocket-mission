@@ -9,6 +9,7 @@ import {
   approveSubmission, rejectSubmission,
 } from '@/lib/firebase/db';
 import { SubmissionCard } from '@/components/missions/submissionCard';
+import { BottomNav } from '@/components/ui/bottomNav';
 import type { SubmissionWithDetails } from '@/types';
 
 export default function ApprovalsPage() {
@@ -30,9 +31,9 @@ export default function ApprovalsPage() {
 
   useEffect(() => {
     const unsub = onAuthChange(async (user) => {
-      if (!user) { router.push('/login'); return; }
+      if (!user) { router.replace('/login'); return; }
       const profile = await getProfile(user.uid);
-      if (!profile?.familyId || profile.role !== 'parent') { router.push('/parent'); return; }
+      if (!profile?.familyId || profile.role !== 'parent') { router.replace('/parent'); return; }
       setParentUid(user.uid);
       setFamilyId(profile.familyId);
       await fetchSubmissions(profile.familyId);
@@ -120,6 +121,7 @@ export default function ApprovalsPage() {
           </div>
         </div>
       )}
+      <BottomNav role="parent" />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { onAuthChange, signOut } from '@/lib/firebase/auth';
 import { getProfile, updateProfile, getFamily } from '@/lib/firebase/db';
 import { Card } from '@/components/ui/card';
 import { LevelBadge } from '@/components/ui/levelBadge';
+import { BottomNav } from '@/components/ui/bottomNav';
 import { formatPoints } from '@/lib/utils';
 import type { Profile, Family } from '@/types';
 
@@ -20,9 +21,9 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const unsub = onAuthChange(async (user) => {
-      if (!user) { router.push('/login'); return; }
+      if (!user) { router.replace('/login'); return; }
       const p = await getProfile(user.uid);
-      if (!p) { router.push('/login'); return; }
+      if (!p) { router.replace('/login'); return; }
       setProfile(p);
       setName(p.name);
       if (p.familyId) {
@@ -45,7 +46,7 @@ export default function SettingsPage() {
 
   async function handleLogout() {
     await signOut();
-    router.push('/login');
+    router.replace('/login');
   }
 
   if (loading) {
@@ -153,6 +154,7 @@ export default function SettingsPage() {
           로그아웃
         </button>
       </div>
+      <BottomNav role={profile?.role === 'parent' ? 'parent' : 'child'} />
     </div>
   );
 }

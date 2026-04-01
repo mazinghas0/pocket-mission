@@ -33,7 +33,7 @@ export default function OnboardingPage() {
       });
 
       await updateProfile(user.uid, { familyId });
-      router.push('/parent');
+      router.replace('/parent');
     } catch (err) {
       setError(err instanceof Error ? err.message : '가족 생성에 실패했습니다.');
       setLoading(false);
@@ -55,7 +55,7 @@ export default function OnboardingPage() {
       const profile = await getProfile(user.uid);
       await updateProfile(user.uid, { familyId: family.id });
 
-      router.push(profile?.role === 'parent' ? '/parent' : '/child');
+      router.replace(profile?.role === 'parent' ? '/parent' : '/child');
     } catch (err) {
       setError(err instanceof Error ? err.message : '가족 참여에 실패했습니다.');
       setLoading(false);

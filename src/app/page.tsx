@@ -11,15 +11,15 @@ export default function RootPage() {
   useEffect(() => {
     const unsub = onAuthChange(async (user) => {
       if (!user) {
-        router.push('/login');
+        router.replace('/login');
         return;
       }
       const profile = await getProfile(user.uid);
       if (!profile || !profile.familyId) {
-        router.push('/onboarding');
+        router.replace('/onboarding');
         return;
       }
-      router.push(profile.role === 'parent' ? '/parent' : '/child');
+      router.replace(profile.role === 'parent' ? '/parent' : '/child');
     });
     return () => unsub();
   }, [router]);

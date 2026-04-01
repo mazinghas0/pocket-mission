@@ -9,6 +9,7 @@ import { getCurrentUser } from '@/lib/firebase/auth';
 import { getMission, createSubmission } from '@/lib/firebase/db';
 import { uploadMissionPhoto } from '@/lib/firebase/storage';
 import { Badge } from '@/components/ui/badge';
+import { BottomNav } from '@/components/ui/bottomNav';
 import { getMissionStatusLabel, getMissionStatusColor, formatPoints } from '@/lib/utils';
 import type { Mission } from '@/types';
 
@@ -179,6 +180,7 @@ export default function MissionSubmitPage() {
           </div>
         )}
       </div>
+      <BottomNav role="child" />
     </div>
   );
 }

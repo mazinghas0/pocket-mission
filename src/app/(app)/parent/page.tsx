@@ -7,6 +7,7 @@ import { onAuthChange, signOut } from '@/lib/firebase/auth';
 import { getProfile, getFamily, getFamilyMembers, subscribeToPendingSubmissions } from '@/lib/firebase/db';
 import { Card } from '@/components/ui/card';
 import { LevelBadge } from '@/components/ui/levelBadge';
+import { BottomNav } from '@/components/ui/bottomNav';
 import { formatPoints } from '@/lib/utils';
 import type { Profile, Family } from '@/types';
 
@@ -28,7 +29,7 @@ export default function ParentDashboard() {
 
   async function handleLogout() {
     await signOut();
-    router.push('/login');
+    router.replace('/login');
   }
 
   const [pageLoading, setPageLoading] = useState(true);
@@ -37,11 +38,11 @@ export default function ParentDashboard() {
     let unsubMissions: (() => void) | null = null;
 
     const unsubAuth = onAuthChange(async (user) => {
-      if (!user) { router.push('/login'); return; }
+      if (!user) { router.replace('/login'); return; }
 
       const p = await getProfile(user.uid);
-      if (!p?.familyId) { router.push('/onboarding'); return; }
-      if (p.role !== 'parent') { router.push('/child'); return; }
+      if (!p?.familyId) { router.replace('/onboarding'); return; }
+      if (p.role !== 'parent') { router.replace('/child'); return; }
 
       setProfile(p);
 
@@ -177,6 +178,7 @@ export default function ParentDashboard() {
           </button>
         )}
       </div>
+      <BottomNav role="parent" />
     </div>
   );
 }

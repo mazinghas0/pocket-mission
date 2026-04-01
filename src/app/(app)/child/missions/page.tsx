@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useMissions } from '@/hooks/useMissions';
 import { MissionCard } from '@/components/missions/missionCard';
+import { BottomNav } from '@/components/ui/bottomNav';
 
 export default function ChildMissionsPage() {
   const router = useRouter();
@@ -77,6 +78,7 @@ export default function ChildMissionsPage() {
           </div>
         )}
       </div>
+      <BottomNav role="child" />
     </div>
   );
 }

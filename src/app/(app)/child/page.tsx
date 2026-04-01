@@ -7,6 +7,7 @@ import { onAuthChange, signOut } from '@/lib/firebase/auth';
 import { getProfile, subscribeToFamilyMissions } from '@/lib/firebase/db';
 import { Card } from '@/components/ui/card';
 import { LevelBadge } from '@/components/ui/levelBadge';
+import { BottomNav } from '@/components/ui/bottomNav';
 import { PointBalance } from '@/components/wallet/pointBalance';
 import type { Profile, Mission } from '@/types';
 
@@ -20,11 +21,11 @@ export default function ChildDashboard() {
     let unsubMissions: (() => void) | null = null;
 
     const unsubAuth = onAuthChange(async (user) => {
-      if (!user) { router.push('/login'); return; }
+      if (!user) { router.replace('/login'); return; }
 
       const p = await getProfile(user.uid);
-      if (!p?.familyId) { router.push('/onboarding'); return; }
-      if (p.role !== 'child') { router.push('/parent'); return; }
+      if (!p?.familyId) { router.replace('/onboarding'); return; }
+      if (p.role !== 'child') { router.replace('/parent'); return; }
 
       setProfile(p);
       setLoading(false);
@@ -65,7 +66,7 @@ export default function ChildDashboard() {
               설정
             </Link>
             <button
-              onClick={async () => { await signOut(); router.push('/login'); }}
+              onClick={async () => { await signOut(); router.replace('/login'); }}
               className="text-purple-200 hover:text-white text-xs transition-colors"
             >
               로그아웃
@@ -108,6 +109,7 @@ export default function ChildDashboard() {
           </Link>
         </div>
       </div>
+      <BottomNav role="child" />
     </div>
   );
 }

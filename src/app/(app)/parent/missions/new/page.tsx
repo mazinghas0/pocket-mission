@@ -7,6 +7,7 @@ import { TemplatePicker } from '@/components/missions/templatePicker';
 import { getCurrentUser } from '@/lib/firebase/auth';
 import { getProfile, createMission } from '@/lib/firebase/db';
 import { Timestamp } from 'firebase/firestore';
+import { BottomNav } from '@/components/ui/bottomNav';
 import type { MissionTemplate } from '@/types';
 
 type Mode = 'select' | 'form';
@@ -86,6 +87,7 @@ export default function NewMissionPage() {
             직접 입력하기
           </button>
         </div>
+        <BottomNav role="parent" />
       </div>
     );
   }
@@ -185,6 +187,7 @@ export default function NewMissionPage() {
           </form>
         </div>
       </div>
+      <BottomNav role="parent" />
     </div>
   );
 }

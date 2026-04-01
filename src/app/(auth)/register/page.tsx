@@ -39,7 +39,7 @@ export default function RegisterPage() {
       return;
     }
 
-    router.push('/onboarding');
+    router.replace('/onboarding');
   }
 
   return (

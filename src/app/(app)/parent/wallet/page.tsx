@@ -7,6 +7,7 @@ import { onAuthChange } from '@/lib/firebase/auth';
 import { getProfile, getFamilyMembers, getFamilyWithdrawals, approveWithdrawal } from '@/lib/firebase/db';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { BottomNav } from '@/components/ui/bottomNav';
 import { formatPoints, formatDateTime } from '@/lib/utils';
 import type { Profile, WithdrawalRequest } from '@/types';
 
@@ -30,9 +31,9 @@ export default function ParentWalletPage() {
 
   useEffect(() => {
     const unsub = onAuthChange(async (user) => {
-      if (!user) { router.push('/login'); return; }
+      if (!user) { router.replace('/login'); return; }
       const profile = await getProfile(user.uid);
-      if (!profile?.familyId || profile.role !== 'parent') { router.push('/parent'); return; }
+      if (!profile?.familyId || profile.role !== 'parent') { router.replace('/parent'); return; }
       await loadData(user.uid, profile.familyId);
     });
     return () => unsub();
@@ -116,6 +117,7 @@ export default function ParentWalletPage() {
           )}
         </div>
       </div>
+      <BottomNav role="parent" />
     </div>
   );
 }

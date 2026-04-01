@@ -11,7 +11,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsub = onAuthChange((user) => {
       if (!user) {
-        router.push('/login');
+        router.replace('/login');
       }
       setChecked(true);
     });

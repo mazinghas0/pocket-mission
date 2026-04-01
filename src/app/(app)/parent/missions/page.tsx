@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { onAuthChange } from '@/lib/firebase/auth';
 import { getProfile, subscribeToFamilyMissions } from '@/lib/firebase/db';
 import { MissionCard } from '@/components/missions/missionCard';
+import { BottomNav } from '@/components/ui/bottomNav';
 import type { Mission, MissionStatus } from '@/types';
 
 const STATUS_FILTERS: Array<{ label: string; value: MissionStatus | 'all' }> = [
@@ -28,10 +29,10 @@ export default function ParentMissionsPage() {
     let unsubMissions: (() => void) | null = null;
 
     const unsubAuth = onAuthChange(async (user) => {
-      if (!user) { router.push('/login'); return; }
+      if (!user) { router.replace('/login'); return; }
 
       const profile = await getProfile(user.uid);
-      if (!profile?.familyId || profile.role !== 'parent') { router.push('/parent'); return; }
+      if (!profile?.familyId || profile.role !== 'parent') { router.replace('/parent'); return; }
 
       unsubMissions = subscribeToFamilyMissions(profile.familyId, (data) => {
         setMissions(data);
@@ -89,6 +90,7 @@ export default function ParentMissionsPage() {
           ))
         )}
       </div>
+      <BottomNav role="parent" />
     </div>
   );
 }

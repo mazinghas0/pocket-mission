@@ -7,6 +7,7 @@ import { getCurrentUser } from '@/lib/firebase/auth';
 import { createWithdrawalRequest } from '@/lib/firebase/db';
 import { PointBalance } from '@/components/wallet/pointBalance';
 import { TransactionList } from '@/components/wallet/transactionList';
+import { BottomNav } from '@/components/ui/bottomNav';
 
 export default function ChildWalletPage() {
   const { wallet, loading, error, refetch } = useWallet();
@@ -130,6 +131,7 @@ export default function ChildWalletPage() {
           </div>
         </div>
       )}
+      <BottomNav role="child" />
     </div>
   );
 }
