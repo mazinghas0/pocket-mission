@@ -12,6 +12,8 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+let badgeCount = 0;
+
 messaging.onBackgroundMessage((payload) => {
   const title = payload.notification?.title ?? '포켓미션';
   const body = payload.notification?.body ?? '';
@@ -20,4 +22,16 @@ messaging.onBackgroundMessage((payload) => {
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
   });
+
+  badgeCount += 1;
+  if (navigator.setAppBadge) {
+    navigator.setAppBadge(badgeCount).catch(function() {});
+  }
+});
+
+self.addEventListener('notificationclick', function() {
+  badgeCount = 0;
+  if (navigator.clearAppBadge) {
+    navigator.clearAppBadge().catch(function() {});
+  }
 });
