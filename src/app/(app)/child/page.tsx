@@ -65,7 +65,8 @@ export default function ChildDashboard() {
   return (
     <div className="min-h-screen bg-quest-cream pb-20">
       {/* 헤더 */}
-      <div className="bg-gradient-to-br from-quest-purple to-purple-700 quest-dots px-4 pt-12 pb-8 text-white">
+      <div className="relative bg-gradient-to-br from-quest-purple to-purple-700 px-4 pt-12 pb-8 text-white overflow-hidden">
+        <div className="quest-dots absolute inset-0 pointer-events-none" />
         <div className="flex items-start justify-between">
           <div>
             <p className="text-purple-200 text-xs font-medium tracking-wide uppercase">Quest Hero</p>

@@ -75,7 +75,8 @@ export default function ParentDashboard() {
   return (
     <div className="min-h-screen bg-quest-cream pb-20">
       {/* 헤더 */}
-      <div className="bg-gradient-to-br from-quest-coral to-orange-500 quest-dots px-4 pt-12 pb-8 text-white">
+      <div className="relative bg-gradient-to-br from-quest-coral to-orange-500 px-4 pt-12 pb-8 text-white overflow-hidden">
+        <div className="quest-dots absolute inset-0 pointer-events-none" />
         <div className="flex items-start justify-between mb-3">
           <div>
             <p className="text-orange-100 text-xs font-medium tracking-wide uppercase">Quest Master</p>
