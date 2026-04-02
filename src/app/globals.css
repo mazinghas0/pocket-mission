@@ -20,18 +20,4 @@
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
-
-  /* gradient 위에 dot 패턴을 겹치기 위한 오버레이용 클래스 (absolute 자식 div에 적용) */
-  .quest-dots {
-    background-image: radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px);
-    background-size: 18px 18px;
-  }
-
-  .quest-card-press {
-    transition: transform 0.12s ease, box-shadow 0.12s ease;
-  }
-
-  .quest-card-press:active {
-    transform: scale(0.97);
-  }
 }

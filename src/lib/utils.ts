@@ -52,13 +52,13 @@ export function getMissionStatusLabel(status: string): string {
 
 export function getMissionStatusColor(status: string): string {
   const colors: Record<string, string> = {
-    pending: 'bg-gray-100 text-gray-500',
-    in_progress: 'bg-quest-coral/10 text-quest-coral',
-    submitted: 'bg-quest-gold/10 text-quest-gold',
-    approved: 'bg-quest-mint/10 text-quest-mint',
-    rejected: 'bg-red-100 text-red-500',
+    pending: 'bg-gray-100 text-gray-700',
+    in_progress: 'bg-blue-100 text-blue-700',
+    submitted: 'bg-yellow-100 text-yellow-700',
+    approved: 'bg-green-100 text-green-700',
+    rejected: 'bg-red-100 text-red-700',
   };
-  return colors[status] ?? 'bg-gray-100 text-gray-500';
+  return colors[status] ?? 'bg-gray-100 text-gray-700';
 }
 
 // ── 레벨 시스템 ─────────────────────────────────────────

@@ -1,15 +1,8 @@
 import { useState } from 'react';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getMissionStatusLabel, getMissionStatusColor, formatPoints, formatDate } from '@/lib/utils';
 import type { Mission, MissionAssignment } from '@/types';
-
-const STATUS_LEFT_BORDER: Record<string, string> = {
-  pending: 'border-l-gray-300',
-  in_progress: 'border-l-quest-coral',
-  submitted: 'border-l-quest-gold',
-  approved: 'border-l-quest-mint',
-  rejected: 'border-l-red-400',
-};
 
 interface MissionCardProps {
   mission: Mission | MissionAssignment;
@@ -21,17 +14,16 @@ interface MissionCardProps {
 
 export function MissionCard({ mission, onClick, onDelete, onEdit, showActions = false }: MissionCardProps) {
   const [confirming, setConfirming] = useState(false);
-  const borderColor = STATUS_LEFT_BORDER[mission.status] ?? 'border-l-gray-300';
 
   return (
     <div
-      className={onClick ? 'cursor-pointer quest-card-press' : ''}
+      className={onClick ? 'cursor-pointer active:scale-[0.99]' : ''}
       onClick={onClick}
     >
-      <div className={`bg-white rounded-2xl shadow-quest p-4 border-l-4 ${borderColor}`}>
+      <Card className="hover:shadow-md transition-shadow">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-quest-navy truncate">{mission.title}</h3>
+            <h3 className="font-semibold text-gray-800 truncate">{mission.title}</h3>
             {mission.description && (
               <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{mission.description}</p>
             )}
@@ -44,8 +36,8 @@ export function MissionCard({ mission, onClick, onDelete, onEdit, showActions = 
             <Badge className={getMissionStatusColor(mission.status)}>
               {getMissionStatusLabel(mission.status)}
             </Badge>
-            <span className="text-quest-gold font-black text-sm">
-              ★ {formatPoints(mission.points)}
+            <span className="text-orange-600 font-bold text-sm">
+              {formatPoints(mission.points)}
             </span>
           </div>
         </div>
@@ -61,7 +53,7 @@ export function MissionCard({ mission, onClick, onDelete, onEdit, showActions = 
             {onEdit && mission.status === 'pending' && (
               <button
                 onClick={(e) => { e.stopPropagation(); onEdit(mission); }}
-                className="text-xs text-gray-500 hover:text-quest-coral transition-colors"
+                className="text-xs text-gray-500 hover:text-orange-500 transition-colors"
               >
                 수정
               </button>
@@ -93,7 +85,7 @@ export function MissionCard({ mission, onClick, onDelete, onEdit, showActions = 
             )}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

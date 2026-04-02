@@ -63,11 +63,13 @@ export default function ApprovalsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-quest-cream pb-20">
-      <div className="bg-white px-4 pt-12 pb-4 shadow-quest">
-        <Link href="/parent" className="text-gray-400 text-sm block mb-1">← 뒤로</Link>
-        <h1 className="font-black text-quest-navy text-lg">인증 승인</h1>
-        <p className="text-sm text-gray-400 mt-0.5">자녀들의 미션 인증을 확인하세요</p>
+    <div className="min-h-screen bg-orange-50 pb-20">
+      <div className="bg-white px-4 pt-12 pb-4 shadow-sm">
+        <div className="flex items-center gap-3 mb-1">
+          <Link href="/parent" className="text-gray-500 text-sm">← 뒤로</Link>
+        </div>
+        <h1 className="font-bold text-gray-800 text-lg">인증 승인</h1>
+        <p className="text-sm text-gray-500">자녀들의 미션 인증을 확인하세요</p>
       </div>
 
       <div className="px-4 mt-4 space-y-3">
@@ -75,9 +77,9 @@ export default function ApprovalsPage() {
           <p className="text-center text-gray-400 py-10 text-sm">불러오는 중...</p>
         ) : submissions.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
-            <div className="text-5xl mb-3">✅</div>
-            <p className="text-sm font-semibold text-gray-500">모든 인증을 처리했어요!</p>
-            <p className="text-xs mt-1">자녀가 미션을 완료하면 여기에 표시됩니다</p>
+            <div className="text-4xl mb-3">✅</div>
+            <p className="text-sm">모든 인증을 처리했어요!</p>
+            <p className="text-xs mt-1 text-gray-300">자녀가 미션을 완료하면 여기에 표시됩니다</p>
           </div>
         ) : (
           submissions.map((submission) => (
@@ -92,16 +94,15 @@ export default function ApprovalsPage() {
       </div>
 
       {rejectTarget && (
-        <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50">
-          <div className="bg-white rounded-t-3xl w-full max-w-lg p-6">
-            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5" />
-            <h3 className="font-black text-quest-navy mb-3">반려 사유 입력</h3>
+        <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50">
+          <div className="bg-white rounded-t-2xl w-full max-w-lg p-6">
+            <h3 className="font-semibold text-gray-800 mb-3">반려 사유 입력</h3>
             <textarea
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               placeholder="자녀에게 전달할 반려 사유를 입력하세요"
               rows={3}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-300 resize-none mb-4"
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none mb-4"
             />
             <div className="grid grid-cols-2 gap-3">
               <button
@@ -113,7 +114,7 @@ export default function ApprovalsPage() {
               <button
                 onClick={() => handleReject(rejectTarget)}
                 disabled={processing || !rejectReason.trim()}
-                className="py-3 rounded-xl bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white text-sm font-black transition-colors"
+                className="py-3 rounded-xl bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white text-sm font-semibold transition-colors"
               >
                 {processing ? '처리 중...' : '반려하기'}
               </button>

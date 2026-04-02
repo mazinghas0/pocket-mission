@@ -24,7 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-title" content="포켓미션" />
         <link rel="apple-touch-startup-image" href="/icons/splash.png" />
       </head>
-      <body className="bg-quest-cream min-h-screen font-sans antialiased">
+      <body className="bg-orange-50 min-h-screen font-sans antialiased">
         {children}
       </body>
     </html>
