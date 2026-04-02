@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { nanoid } from 'nanoid';
 import { getCurrentUser, signOut } from '@/lib/firebase/auth';
-import { createFamily, getFamilyByInviteCode, getProfile, updateProfile, createAssignmentsForNewChild } from '@/lib/firebase/db';
+import { createFamily, getFamilyByInviteCode, getProfile, updateProfile, createAssignmentsForNewChild, getInviteCodeExpiry } from '@/lib/firebase/db';
 
 type Step = 'choice' | 'create' | 'join';
 
@@ -29,6 +29,7 @@ export default function OnboardingPage() {
       const familyId = await createFamily({
         name: familyName,
         inviteCode: code,
+        inviteCodeExpiresAt: getInviteCodeExpiry(),
         subscriptionStatus: 'free',
         pointRate: 1,
       });

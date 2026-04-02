@@ -17,6 +17,7 @@ export interface Family {
   id: string;
   name: string;
   inviteCode: string;
+  inviteCodeExpiresAt?: Timestamp;
   subscriptionStatus: SubscriptionStatus;
   stripeCustomerId?: string;
   pointRate: number;

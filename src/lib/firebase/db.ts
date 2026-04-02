@@ -85,7 +85,25 @@ export async function getFamilyByInviteCode(code: string): Promise<Family | null
   const snap = await getDocs(q);
   if (snap.empty) return null;
   const d = snap.docs[0];
-  return { id: d.id, ...d.data() } as Family;
+  const family = { id: d.id, ...d.data() } as Family;
+  if (family.inviteCodeExpiresAt && family.inviteCodeExpiresAt.toMillis() < Date.now()) {
+    return null;
+  }
+  return family;
+}
+
+export function getInviteCodeExpiry(): Timestamp {
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7);
+  return Timestamp.fromDate(expiresAt);
+}
+
+export async function regenerateInviteCode(familyId: string): Promise<{ code: string; expiresAt: Timestamp }> {
+  const { nanoid } = await import('nanoid');
+  const code = nanoid(6).toUpperCase();
+  const expiresAt = getInviteCodeExpiry();
+  await updateFamily(familyId, { inviteCode: code, inviteCodeExpiresAt: expiresAt } as Partial<Family>);
+  return { code, expiresAt };
 }
 
 export async function getFamilyMembers(familyId: string): Promise<Profile[]> {

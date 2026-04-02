@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { onAuthChange, signOut } from '@/lib/firebase/auth';
-import { getProfile, getFamily, getFamilyMembers, subscribeToPendingAssignmentCount } from '@/lib/firebase/db';
+import { getProfile, getFamily, getFamilyMembers, subscribeToPendingAssignmentCount, regenerateInviteCode } from '@/lib/firebase/db';
 import { Card } from '@/components/ui/card';
 import { LevelBadge } from '@/components/ui/levelBadge';
 import { BottomNav } from '@/components/ui/bottomNav';
 import { formatPoints } from '@/lib/utils';
+import { QrCodeModal } from '@/components/ui/qrCodeModal';
 import type { Profile, Family } from '@/types';
 
 export default function ParentDashboard() {
@@ -19,6 +20,7 @@ export default function ParentDashboard() {
   const [pendingCount, setPendingCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showQr, setShowQr] = useState(false);
 
   async function handleCopyInviteCode() {
     if (!family) return;
@@ -26,6 +28,34 @@ export default function ParentDashboard() {
     await navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  function isInviteExpired(): boolean {
+    if (!family?.inviteCodeExpiresAt) return false;
+    return family.inviteCodeExpiresAt.toMillis() < Date.now();
+  }
+
+  async function handleRegenerate() {
+    if (!family) return;
+    const { code, expiresAt } = await regenerateInviteCode(family.id);
+    setFamily({ ...family, inviteCode: code, inviteCodeExpiresAt: expiresAt });
+  }
+
+  async function handleShare() {
+    if (!family) return;
+    const url = `${window.location.origin}/invite/${family.inviteCode}`;
+    const shareData = {
+      title: '포켓미션 가족 초대',
+      text: `${family.name}에서 초대합니다! 미션을 완료하고 용돈을 받아요.`,
+      url,
+    };
+    if (navigator.share) {
+      await navigator.share(shareData).catch(() => {});
+    } else {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   }
 
   async function handleLogout() {
@@ -92,18 +122,48 @@ export default function ParentDashboard() {
           </div>
         </div>
         {family && (
-          <div className="flex items-center gap-2 mt-3">
-            <span className="text-orange-100 text-sm">{family.name}</span>
-            <button
-              onClick={handleCopyInviteCode}
-              className="bg-white/20 hover:bg-white/30 rounded-lg px-2 py-0.5 text-xs font-mono transition-colors"
-            >
-              {copied ? '링크 복사됨!' : `초대 링크 복사`}
-            </button>
-            {family.subscriptionStatus === 'premium' && (
-              <span className="bg-yellow-300 text-yellow-900 rounded-full px-2 py-0.5 text-xs font-semibold">
-                프리미엄
-              </span>
+          <div className="mt-3 space-y-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-orange-100 text-sm">{family.name}</span>
+              {isInviteExpired() ? (
+                <button
+                  onClick={handleRegenerate}
+                  className="bg-red-400/80 hover:bg-red-400 rounded-lg px-2 py-0.5 text-xs transition-colors"
+                >
+                  초대코드 만료됨 - 재발급
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={handleCopyInviteCode}
+                    className="bg-white/20 hover:bg-white/30 rounded-lg px-2 py-0.5 text-xs font-mono transition-colors"
+                  >
+                    {copied ? '링크 복사됨!' : '초대 링크 복사'}
+                  </button>
+                  <button
+                    onClick={() => setShowQr(true)}
+                    className="bg-white/20 hover:bg-white/30 rounded-lg px-2 py-0.5 text-xs transition-colors"
+                  >
+                    QR 초대
+                  </button>
+                  <button
+                    onClick={handleShare}
+                    className="bg-white/20 hover:bg-white/30 rounded-lg px-2 py-0.5 text-xs transition-colors"
+                  >
+                    공유하기
+                  </button>
+                </>
+              )}
+              {family.subscriptionStatus === 'premium' && (
+                <span className="bg-yellow-300 text-yellow-900 rounded-full px-2 py-0.5 text-xs font-semibold">
+                  프리미엄
+                </span>
+              )}
+            </div>
+            {family.inviteCodeExpiresAt && !isInviteExpired() && (
+              <p className="text-orange-200/70 text-xs">
+                초대코드 만료: {family.inviteCodeExpiresAt.toDate().toLocaleDateString('ko-KR')}
+              </p>
             )}
           </div>
         )}
@@ -180,6 +240,13 @@ export default function ParentDashboard() {
 
 
       </div>
+      {showQr && family && (
+        <QrCodeModal
+          inviteUrl={`${window.location.origin}/invite/${family.inviteCode}`}
+          familyName={family.name}
+          onClose={() => setShowQr(false)}
+        />
+      )}
       <BottomNav role="parent" />
     </div>
   );

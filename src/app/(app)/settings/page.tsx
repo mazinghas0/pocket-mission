@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthChange, signOut } from '@/lib/firebase/auth';
-import { getProfile, updateProfile, getFamily, updateFamily } from '@/lib/firebase/db';
+import { getProfile, updateProfile, getFamily, updateFamily, regenerateInviteCode } from '@/lib/firebase/db';
 import { Card } from '@/components/ui/card';
 import { LevelBadge } from '@/components/ui/levelBadge';
 import { BottomNav } from '@/components/ui/bottomNav';
@@ -134,10 +134,31 @@ export default function SettingsPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-500">초대 코드</span>
-                  <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">
-                    {family.inviteCode}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded">
+                      {family.inviteCode}
+                    </span>
+                    <button
+                      onClick={async () => {
+                        const { code, expiresAt } = await regenerateInviteCode(family.id);
+                        setFamily({ ...family, inviteCode: code, inviteCodeExpiresAt: expiresAt });
+                      }}
+                      className="text-xs text-orange-500 hover:text-orange-600 transition-colors"
+                    >
+                      재발급
+                    </button>
+                  </div>
                 </div>
+                {family.inviteCodeExpiresAt && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">초대코드 만료</span>
+                    <span className={`text-sm ${family.inviteCodeExpiresAt.toMillis() < Date.now() ? 'text-red-500 font-semibold' : 'text-gray-600'}`}>
+                      {family.inviteCodeExpiresAt.toMillis() < Date.now()
+                        ? '만료됨'
+                        : family.inviteCodeExpiresAt.toDate().toLocaleDateString('ko-KR')}
+                    </span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-500">구독</span>
                   <span className="text-sm font-medium text-gray-800">
