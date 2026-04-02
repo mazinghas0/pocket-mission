@@ -91,6 +91,7 @@ service cloud.firestore {
         allow read: if isAuth() && isSameFamily(get(/databases/$(database)/documents/mission_assignments/$(assignId)).data.familyId);
         allow create: if isAuth() && request.auth.uid == request.resource.data.childId;
         allow update: if isAuth() && isParent();
+        allow delete: if isAuth() && isParent();
       }
     }
   }
