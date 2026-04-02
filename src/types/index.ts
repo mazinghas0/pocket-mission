@@ -9,6 +9,9 @@ export type MissionStatus = 'pending' | 'in_progress' | 'submitted' | 'approved'
 export type SubmissionStatus = 'pending' | 'approved' | 'rejected';
 export type TransactionType = 'earned' | 'requested' | 'paid';
 export type WithdrawalStatus = 'pending' | 'approved';
+export type MissionFrequency = 'once' | 'daily' | 'weekly' | 'monthly';
+export type MissionCategory = 'study' | 'chore' | 'health' | 'creative' | 'social';
+export type MissionColor = 'orange' | 'blue' | 'green' | 'pink' | 'purple' | 'yellow';
 
 export interface Family {
   id: string;
@@ -104,6 +107,10 @@ export interface MissionDefinition {
   description: string;
   points: number;
   isRecurring: boolean;
+  frequency?: MissionFrequency;
+  category?: MissionCategory;
+  color?: MissionColor;
+  emoji?: string;
   templateId?: string;
   dueDate?: Timestamp;
   createdAt: Timestamp;
@@ -119,6 +126,10 @@ export interface MissionAssignment {
   description: string;
   points: number;
   isRecurring: boolean;
+  frequency?: MissionFrequency;
+  category?: MissionCategory;
+  color?: MissionColor;
+  emoji?: string;
   templateId?: string;
   dueDate?: Timestamp;
   status: MissionStatus;

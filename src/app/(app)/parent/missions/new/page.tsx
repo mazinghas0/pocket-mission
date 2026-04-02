@@ -8,7 +8,7 @@ import { getCurrentUser } from '@/lib/firebase/auth';
 import { getProfile, getFamilyMembers, createMissionDefinitionWithAssignments, getAssignment, updateDefinition } from '@/lib/firebase/db';
 import { Timestamp } from 'firebase/firestore';
 import { BottomNav } from '@/components/ui/bottomNav';
-import type { MissionTemplate } from '@/types';
+import type { MissionTemplate, MissionFrequency, MissionCategory, MissionColor } from '@/types';
 
 type Mode = 'select' | 'form';
 
@@ -23,6 +23,10 @@ export default function NewMissionPage() {
   const [points, setPoints] = useState(30);
   const [dueDate, setDueDate] = useState('');
   const [isRecurring, setIsRecurring] = useState(false);
+  const [frequency, setFrequency] = useState<MissionFrequency>('once');
+  const [category, setCategory] = useState<MissionCategory | undefined>();
+  const [color, setColor] = useState<MissionColor>('orange');
+  const [emoji, setEmoji] = useState('');
   const [templateId, setTemplateId] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -39,6 +43,10 @@ export default function NewMissionPage() {
       setDescription(m.description);
       setPoints(m.points);
       setIsRecurring(m.isRecurring);
+      if (m.frequency) setFrequency(m.frequency);
+      if (m.category) setCategory(m.category);
+      if (m.color) setColor(m.color);
+      if (m.emoji) setEmoji(m.emoji);
       if (m.dueDate) {
         const d = m.dueDate.toDate();
         setDueDate(d.toISOString().split('T')[0]);
@@ -86,6 +94,10 @@ export default function NewMissionPage() {
             description,
             points,
             isRecurring,
+            frequency,
+            ...(category && { category }),
+            color,
+            ...(emoji && { emoji }),
             ...(dueDate && { dueDate: Timestamp.fromDate(new Date(dueDate)) }),
             ...(templateId && { templateId }),
           },
@@ -185,6 +197,94 @@ export default function NewMissionPage() {
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">미션 주기</label>
+              <div className="grid grid-cols-4 gap-2">
+                {([
+                  { value: 'once', label: '1회성', icon: '🎯' },
+                  { value: 'daily', label: '매일', icon: '☀️' },
+                  { value: 'weekly', label: '매주', icon: '📅' },
+                  { value: 'monthly', label: '매달', icon: '🏆' },
+                ] as { value: MissionFrequency; label: string; icon: string }[]).map((f) => (
+                  <button
+                    key={f.value}
+                    type="button"
+                    onClick={() => setFrequency(f.value)}
+                    className={`flex flex-col items-center py-2 px-1 rounded-xl border-2 text-xs font-medium transition-colors ${
+                      frequency === f.value
+                        ? 'border-orange-500 bg-orange-50 text-orange-700'
+                        : 'border-gray-200 bg-white text-gray-500'
+                    }`}
+                  >
+                    <span className="text-lg mb-0.5">{f.icon}</span>
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">카테고리</label>
+              <div className="flex flex-wrap gap-2">
+                {([
+                  { value: 'study', label: '공부', icon: '📚' },
+                  { value: 'chore', label: '집안일', icon: '🧹' },
+                  { value: 'health', label: '건강', icon: '💪' },
+                  { value: 'creative', label: '창의', icon: '🎨' },
+                  { value: 'social', label: '사회성', icon: '🤝' },
+                ] as { value: MissionCategory; label: string; icon: string }[]).map((c) => (
+                  <button
+                    key={c.value}
+                    type="button"
+                    onClick={() => setCategory(category === c.value ? undefined : c.value)}
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors ${
+                      category === c.value
+                        ? 'border-orange-500 bg-orange-50 text-orange-700'
+                        : 'border-gray-200 bg-white text-gray-500'
+                    }`}
+                  >
+                    <span>{c.icon}</span>
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">색상</label>
+              <div className="flex gap-2">
+                {([
+                  { value: 'orange', bg: 'bg-orange-400' },
+                  { value: 'blue', bg: 'bg-blue-400' },
+                  { value: 'green', bg: 'bg-green-400' },
+                  { value: 'pink', bg: 'bg-pink-400' },
+                  { value: 'purple', bg: 'bg-purple-400' },
+                  { value: 'yellow', bg: 'bg-yellow-400' },
+                ] as { value: MissionColor; bg: string }[]).map((c) => (
+                  <button
+                    key={c.value}
+                    type="button"
+                    onClick={() => setColor(c.value)}
+                    className={`w-8 h-8 rounded-full ${c.bg} transition-transform ${
+                      color === c.value ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : ''
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">이모지 아이콘 (선택)</label>
+              <input
+                type="text"
+                value={emoji}
+                onChange={(e) => setEmoji(e.target.value)}
+                placeholder="이모지 하나 입력 (예: ⭐)"
+                maxLength={2}
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
             </div>
