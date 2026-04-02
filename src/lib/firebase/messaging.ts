@@ -28,18 +28,25 @@ export async function requestFcmToken(): Promise<string | null> {
 function playNotificationSound(): void {
   try {
     const ctx = new AudioContext();
-    const oscillator = ctx.createOscillator();
-    const gain = ctx.createGain();
-    oscillator.connect(gain);
-    gain.connect(ctx.destination);
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(880, ctx.currentTime);
-    oscillator.frequency.setValueAtTime(1100, ctx.currentTime + 0.1);
-    oscillator.frequency.setValueAtTime(880, ctx.currentTime + 0.2);
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-    oscillator.start(ctx.currentTime);
-    oscillator.stop(ctx.currentTime + 0.4);
+    const now = ctx.currentTime;
+
+    const playNote = (freq: number, startTime: number, duration: number, volume: number) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, startTime);
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(volume, startTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+
+    playNote(784, now, 0.15, 0.25);
+    playNote(1047, now + 0.12, 0.15, 0.25);
+    playNote(1319, now + 0.24, 0.25, 0.2);
   } catch {
     // 자동재생 정책으로 실패 시 무시
   }
