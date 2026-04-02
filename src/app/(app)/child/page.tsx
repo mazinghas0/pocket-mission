@@ -65,7 +65,7 @@ export default function ChildDashboard() {
   return (
     <div className="min-h-screen bg-quest-cream pb-20">
       {/* 헤더 */}
-      <div className="relative bg-gradient-to-br from-quest-purple to-purple-700 px-4 pt-12 pb-8 text-white overflow-hidden">
+      <div className="relative bg-gradient-to-br from-quest-purple to-purple-700 px-4 pt-12 pb-6 text-white overflow-hidden">
         <div className="quest-dots absolute inset-0 pointer-events-none" />
         <div className="flex items-start justify-between">
           <div>
@@ -101,20 +101,20 @@ export default function ChildDashboard() {
         </div>
       </div>
 
-      <div className="px-4 -mt-4 space-y-4">
+      <div className="px-4 -mt-3 space-y-3">
         {/* 레벨 뱃지 */}
         <LevelBadge points={points} />
 
         {/* 퀘스트 현황 */}
         <div className="grid grid-cols-2 gap-3">
-          <Link href="/child/missions">
-            <div className="bg-white rounded-2xl shadow-quest p-4 quest-card-press text-center">
+          <Link href="/child/missions" className="block">
+            <div className="bg-white rounded-2xl shadow-quest p-4 quest-card-press text-center min-h-[90px] flex flex-col items-center justify-center">
               <p className="text-3xl font-black text-quest-purple">{activeMissionsCount}</p>
               <p className="text-xs font-semibold text-gray-600 mt-1">진행 중인 퀘스트</p>
             </div>
           </Link>
 
-          <div className="bg-white rounded-2xl shadow-quest p-4 text-center">
+          <div className="bg-white rounded-2xl shadow-quest p-4 text-center min-h-[90px] flex flex-col items-center justify-center">
             <p className="text-3xl font-black text-quest-gold">{submittedCount}</p>
             <p className="text-xs font-semibold text-gray-600 mt-1">승인 대기 중</p>
           </div>
@@ -122,16 +122,16 @@ export default function ChildDashboard() {
 
         {/* 퀵 액션 */}
         <div className="grid grid-cols-2 gap-3">
-          <Link href="/child/missions">
-            <div className="bg-quest-purple-light border border-quest-purple/20 rounded-2xl shadow-quest p-4 quest-card-press text-center">
-              <div className="text-2xl mb-2">⚔️</div>
+          <Link href="/child/missions" className="block">
+            <div className="bg-quest-purple-light border border-quest-purple/20 rounded-2xl shadow-quest p-4 quest-card-press text-center min-h-[90px] flex flex-col items-center justify-center">
+              <div className="text-3xl mb-2">⚔️</div>
               <p className="text-sm font-bold text-quest-purple">내 퀘스트</p>
             </div>
           </Link>
 
-          <Link href="/child/wallet">
-            <div className="bg-quest-gold-light border border-quest-gold/20 rounded-2xl shadow-quest p-4 quest-card-press text-center">
-              <div className="text-2xl mb-2">💰</div>
+          <Link href="/child/wallet" className="block">
+            <div className="bg-quest-gold-light border border-quest-gold/20 rounded-2xl shadow-quest p-4 quest-card-press text-center min-h-[90px] flex flex-col items-center justify-center">
+              <div className="text-3xl mb-2">💰</div>
               <p className="text-sm font-bold text-quest-navy">내 지갑</p>
             </div>
           </Link>

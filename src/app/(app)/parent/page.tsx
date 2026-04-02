@@ -75,7 +75,7 @@ export default function ParentDashboard() {
   return (
     <div className="min-h-screen bg-quest-cream pb-20">
       {/* 헤더 */}
-      <div className="relative bg-gradient-to-br from-quest-coral to-orange-500 px-4 pt-12 pb-8 text-white overflow-hidden">
+      <div className="relative bg-gradient-to-br from-quest-coral to-orange-500 px-4 pt-12 pb-6 text-white overflow-hidden">
         <div className="quest-dots absolute inset-0 pointer-events-none" />
         <div className="flex items-start justify-between mb-3">
           <div>
@@ -112,7 +112,7 @@ export default function ParentDashboard() {
         )}
       </div>
 
-      <div className="px-4 -mt-4 space-y-4">
+      <div className="px-4 -mt-3 space-y-3">
         {/* 승인 대기 배너 */}
         {pendingCount > 0 && (
           <Link href="/parent/approvals">
@@ -136,9 +136,9 @@ export default function ParentDashboard() {
 
         {/* 액션 카드 그리드 */}
         <div className="grid grid-cols-2 gap-3">
-          <Link href="/parent/approvals">
-            <div className="bg-white rounded-2xl shadow-quest p-4 quest-card-press h-full">
-              <div className="text-2xl mb-2">✅</div>
+          <Link href="/parent/approvals" className="block">
+            <div className="bg-white rounded-2xl shadow-quest p-4 quest-card-press min-h-[110px] flex flex-col items-center justify-center text-center">
+              <div className="text-3xl mb-2">✅</div>
               <p className="text-sm font-bold text-quest-navy">인증 승인</p>
               <p className="text-xs text-gray-400 mt-0.5">
                 {pendingCount > 0
@@ -148,25 +148,25 @@ export default function ParentDashboard() {
             </div>
           </Link>
 
-          <Link href="/parent/missions/new">
-            <div className="bg-quest-coral-light border border-quest-coral/20 rounded-2xl shadow-quest p-4 quest-card-press h-full">
-              <div className="text-2xl mb-2">⚔️</div>
+          <Link href="/parent/missions/new" className="block">
+            <div className="bg-quest-coral-light border border-quest-coral/20 rounded-2xl shadow-quest p-4 quest-card-press min-h-[110px] flex flex-col items-center justify-center text-center">
+              <div className="text-3xl mb-2">⚔️</div>
               <p className="text-sm font-bold text-quest-coral">미션 만들기</p>
               <p className="text-xs text-quest-coral/60 mt-0.5">새 퀘스트 추가</p>
             </div>
           </Link>
 
-          <Link href="/parent/missions">
-            <div className="bg-white rounded-2xl shadow-quest p-4 quest-card-press h-full">
-              <div className="text-2xl mb-2">📋</div>
+          <Link href="/parent/missions" className="block">
+            <div className="bg-white rounded-2xl shadow-quest p-4 quest-card-press min-h-[110px] flex flex-col items-center justify-center text-center">
+              <div className="text-3xl mb-2">📋</div>
               <p className="text-sm font-bold text-quest-navy">미션 목록</p>
               <p className="text-xs text-gray-400 mt-0.5">전체 현황</p>
             </div>
           </Link>
 
-          <Link href="/parent/wallet">
-            <div className="bg-quest-gold-light border border-quest-gold/20 rounded-2xl shadow-quest p-4 quest-card-press h-full">
-              <div className="text-2xl mb-2">💰</div>
+          <Link href="/parent/wallet" className="block">
+            <div className="bg-quest-gold-light border border-quest-gold/20 rounded-2xl shadow-quest p-4 quest-card-press min-h-[110px] flex flex-col items-center justify-center text-center">
+              <div className="text-3xl mb-2">💰</div>
               <p className="text-sm font-bold text-quest-navy">용돈 현황</p>
               <p className="text-xs text-gray-400 mt-0.5">자녀 포인트</p>
             </div>
