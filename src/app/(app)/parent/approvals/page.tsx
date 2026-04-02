@@ -51,7 +51,7 @@ export default function ApprovalsPage() {
     if (childToken) {
       await fetch('/api/notify', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_NOTIFY_SECRET ?? '' },
         body: JSON.stringify({
           tokens: [childToken],
           title: '미션 승인됨!',
@@ -73,7 +73,7 @@ export default function ApprovalsPage() {
     if (childToken) {
       await fetch('/api/notify', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_NOTIFY_SECRET ?? '' },
         body: JSON.stringify({
           tokens: [childToken],
           title: '미션 반려',

@@ -158,12 +158,14 @@ export async function approveSubmission(
   points: number,
   reviewerId: string
 ): Promise<void> {
+  const childProfile = await getProfile(childId);
+  if (!childProfile) throw new Error('사용자를 찾을 수 없습니다.');
   const batch = writeBatch(db);
   batch.update(doc(submissionsCol(missionId), submissionId), {
     status: 'approved', reviewedBy: reviewerId, reviewedAt: serverTimestamp(),
   });
   batch.update(doc(missionsCol(), missionId), { status: 'approved' });
-  batch.update(doc(usersCol(), childId), { points: (await getProfile(childId))!.points + points });
+  batch.update(doc(usersCol(), childId), { points: childProfile.points + points });
   const txRef = doc(transactionsCol());
   batch.set(txRef, {
     profileId: childId, amount: points, type: 'earned',

@@ -1,6 +1,6 @@
 export const runtime = 'edge';
 
-const PROJECT_ID = 'pocket-mission';
+const PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? 'pocket-mission';
 const FCM_ENDPOINT = `https://fcm.googleapis.com/v1/projects/${PROJECT_ID}/messages:send`;
 const TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token';
 
@@ -99,6 +99,11 @@ async function sendFcmMessage(token: string, title: string, body: string): Promi
 
 export async function POST(request: Request): Promise<Response> {
   try {
+    const secret = request.headers.get('x-internal-secret');
+    if (secret !== (process.env.NOTIFY_SECRET ?? '')) {
+      return Response.json({ ok: false, error: '인증 실패' }, { status: 401 });
+    }
+
     const { tokens, title, body } = await request.json() as {
       tokens: string[];
       title: string;

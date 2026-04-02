@@ -67,7 +67,7 @@ export default function MissionSubmitPage() {
         if (parentTokens.length > 0) {
           await fetch('/api/notify', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_NOTIFY_SECRET ?? '' },
             body: JSON.stringify({
               tokens: parentTokens,
               title: '미션 인증 대기',

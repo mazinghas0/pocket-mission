@@ -41,7 +41,7 @@ async function runPeriodReset(
       if (a.definitionId !== def.id) return false;
       if (!a.createdAt) return false;
       const createdAt = a.createdAt.toDate();
-      return createdAt >= periodStart && a.status !== 'rejected';
+      return createdAt >= periodStart && a.status !== 'rejected' && a.status !== 'approved';
     });
     if (!hasActive) {
       await createSingleAssignment(def, childId);
