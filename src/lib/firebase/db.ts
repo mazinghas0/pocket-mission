@@ -43,6 +43,24 @@ export async function updateProfile(uid: string, data: Partial<Profile>): Promis
   await updateDoc(doc(usersCol(), uid), data);
 }
 
+export async function saveFcmToken(uid: string, token: string): Promise<void> {
+  await updateDoc(doc(usersCol(), uid), { fcmToken: token });
+}
+
+export async function getParentFcmTokens(familyId: string): Promise<string[]> {
+  const q = query(usersCol(), where('familyId', '==', familyId), where('role', '==', 'parent'));
+  const snap = await getDocs(q);
+  return snap.docs
+    .map(d => (d.data() as Profile).fcmToken)
+    .filter((t): t is string => !!t);
+}
+
+export async function getChildFcmToken(childId: string): Promise<string | null> {
+  const snap = await getDoc(doc(usersCol(), childId));
+  if (!snap.exists()) return null;
+  return (snap.data() as Profile).fcmToken ?? null;
+}
+
 // ── 가족 ─────────────────────────────────────────────────
 
 export async function createFamily(data: Omit<Family, 'id' | 'createdAt'>): Promise<string> {

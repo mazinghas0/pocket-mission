@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { getCurrentUser } from '@/lib/firebase/auth';
-import { getAssignment, createAssignmentSubmission } from '@/lib/firebase/db';
+import { getAssignment, createAssignmentSubmission, getParentFcmTokens } from '@/lib/firebase/db';
 import { uploadMissionPhoto } from '@/lib/firebase/storage';
 import { Badge } from '@/components/ui/badge';
 import { BottomNav } from '@/components/ui/bottomNav';
@@ -59,6 +59,19 @@ export default function MissionSubmitPage() {
         memo,
         status: 'pending',
       });
+
+      const parentTokens = await getParentFcmTokens(mission.familyId);
+      if (parentTokens.length > 0) {
+        await fetch('/api/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tokens: parentTokens,
+            title: '미션 인증 대기',
+            body: `${mission.title} 미션 인증을 확인해주세요!`,
+          }),
+        }).catch(() => {});
+      }
 
       router.push('/child/missions');
     } catch (err) {

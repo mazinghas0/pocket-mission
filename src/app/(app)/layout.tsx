@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthChange } from '@/lib/firebase/auth';
+import { saveFcmToken } from '@/lib/firebase/db';
+import { requestFcmToken } from '@/lib/firebase/messaging';
 import { IosInstallBanner } from '@/components/ui/iosInstallBanner';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -10,11 +12,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    const unsub = onAuthChange((user) => {
+    const unsub = onAuthChange(async (user) => {
       if (!user) {
         router.replace('/login');
+        setChecked(true);
+        return;
       }
       setChecked(true);
+      const token = await requestFcmToken();
+      if (token) {
+        await saveFcmToken(user.uid, token).catch(() => {});
+      }
     });
     return () => unsub();
   }, [router]);

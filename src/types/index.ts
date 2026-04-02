@@ -27,6 +27,7 @@ export interface Profile {
   name: string;
   points: number;
   createdAt: Timestamp;
+  fcmToken?: string;
 }
 
 export interface MissionTemplate {

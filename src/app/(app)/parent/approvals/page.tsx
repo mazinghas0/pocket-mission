@@ -7,6 +7,7 @@ import { onAuthChange } from '@/lib/firebase/auth';
 import {
   getProfile, getPendingFamilyAssignmentSubmissions,
   approveAssignmentSubmission, rejectAssignmentSubmission,
+  getChildFcmToken,
 } from '@/lib/firebase/db';
 import { SubmissionCard } from '@/components/missions/submissionCard';
 import { BottomNav } from '@/components/ui/bottomNav';
@@ -46,6 +47,18 @@ export default function ApprovalsPage() {
     const sub = submissions.find(s => s.id === submissionId);
     if (!sub?.assignment) { setProcessing(false); return; }
     await approveAssignmentSubmission(sub.assignment.id, submissionId, sub.childId, sub.assignment.points, parentUid);
+    const childToken = await getChildFcmToken(sub.childId);
+    if (childToken) {
+      await fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tokens: [childToken],
+          title: '미션 승인됨!',
+          body: `${sub.assignment.title} 미션 완료! ${sub.assignment.points}P 획득`,
+        }),
+      }).catch(() => {});
+    }
     await fetchSubmissions(familyId);
     setProcessing(false);
   }
@@ -56,6 +69,18 @@ export default function ApprovalsPage() {
     const sub = submissions.find(s => s.id === submissionId);
     if (!sub?.assignment) { setProcessing(false); return; }
     await rejectAssignmentSubmission(sub.assignment.id, submissionId, parentUid, rejectReason);
+    const childToken = await getChildFcmToken(sub.childId);
+    if (childToken) {
+      await fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tokens: [childToken],
+          title: '미션 반려',
+          body: `${sub.assignment.title}: ${rejectReason}`,
+        }),
+      }).catch(() => {});
+    }
     setRejectTarget(null);
     setRejectReason('');
     await fetchSubmissions(familyId);
