@@ -83,6 +83,18 @@ interface FirestoreDoc {
 }
 
 async function getAdminFcmToken(accessToken: string): Promise<string | null> {
+  const adminUid = process.env.ADMIN_UID ?? '';
+
+  if (adminUid) {
+    const res = await fetch(`${FIRESTORE_BASE}/users/${adminUid}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (res.ok) {
+      const doc = await res.json() as { fields?: Record<string, { stringValue?: string }> };
+      return doc.fields?.fcmToken?.stringValue ?? null;
+    }
+  }
+
   const query = {
     structuredQuery: {
       from: [{ collectionId: 'users' }],
@@ -107,16 +119,6 @@ async function getAdminFcmToken(accessToken: string): Promise<string | null> {
   });
 
   const results = await res.json() as Array<{ document?: { name?: string; fields?: Record<string, { stringValue?: string }> } }>;
-
-  for (const result of results) {
-    const fields = result.document?.fields;
-    if (!fields) continue;
-    const docName = result.document?.name ?? '';
-    const fcmToken = fields.fcmToken?.stringValue;
-    if (docName.includes(ADMIN_EMAIL) || fields.name?.stringValue === ADMIN_EMAIL) {
-      return fcmToken ?? null;
-    }
-  }
 
   for (const result of results) {
     const fields = result.document?.fields;
