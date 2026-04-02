@@ -8,7 +8,7 @@ import { onAuthChange, getCurrentUser } from '@/lib/firebase/auth';
 import { getAdminUsers, getAdminFamilies } from '@/lib/firebase/db';
 import type { AdminUser, AdminFamily } from '@/lib/firebase/db';
 
-const ADMIN_EMAIL = 'mazinghas0@email.com';
+const ADMIN_EMAIL = 'mazinghas0@gmail.com';
 
 function formatDate(ts: { toDate: () => Date } | null | undefined): string {
   if (!ts) return '-';
@@ -18,31 +18,44 @@ function formatDate(ts: { toDate: () => Date } | null | undefined): string {
 
 export default function AdminPage() {
   const router = useRouter();
-  const [authorized, setAuthorized] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<'loading' | 'authorized' | 'unauthorized'>('loading');
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [families, setFamilies] = useState<AdminFamily[]>([]);
   const [tab, setTab] = useState<'overview' | 'users' | 'families'>('overview');
 
   useEffect(() => {
     const unsub = onAuthChange(async (user) => {
-      if (!user || user.email !== ADMIN_EMAIL) {
+      if (!user) {
         router.replace('/login');
         return;
       }
-      setAuthorized(true);
+      if (user.email !== ADMIN_EMAIL) {
+        setStatus('unauthorized');
+        return;
+      }
       const [u, f] = await Promise.all([getAdminUsers(), getAdminFamilies()]);
       setUsers(u);
       setFamilies(f);
-      setLoading(false);
+      setStatus('authorized');
     });
     return () => unsub();
   }, [router]);
 
-  if (!authorized || loading) {
+  if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <p className="text-gray-400 text-sm">로딩 중...</p>
+      </div>
+    );
+  }
+
+  if (status === 'unauthorized') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="text-center">
+          <p className="text-red-400 text-lg font-bold mb-2">접근 권한 없음</p>
+          <p className="text-gray-500 text-sm">관리자 계정으로만 접근할 수 있습니다.</p>
+        </div>
       </div>
     );
   }
