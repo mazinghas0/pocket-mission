@@ -278,15 +278,23 @@ export default function NewMissionPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">이모지 아이콘 (선택)</label>
-              <input
-                type="text"
-                value={emoji}
-                onChange={(e) => setEmoji(e.target.value)}
-                placeholder="이모지 하나 입력 (예: ⭐)"
-                maxLength={2}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-2">아이콘 (선택)</label>
+              <div className="grid grid-cols-5 gap-2">
+                {['⭐','🌟','🎯','🏅','💎','🚀','🦄','🐶','🐱','🌈','🎮','🎵','📖','🧩','🍰','🏀','✏️','🌸','🦋','💫'].map((e) => (
+                  <button
+                    key={e}
+                    type="button"
+                    onClick={() => setEmoji(emoji === e ? '' : e)}
+                    className={`w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all ${
+                      emoji === e
+                        ? 'bg-orange-100 ring-2 ring-orange-400 scale-110'
+                        : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
+                  >
+                    {e}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="flex items-center justify-between py-2">
