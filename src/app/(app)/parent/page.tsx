@@ -178,14 +178,7 @@ export default function ParentDashboard() {
           </Card>
         )}
 
-        {family?.subscriptionStatus === 'free' && (
-          <button
-            onClick={() => router.push('/parent/wallet')}
-            className="w-full text-center text-xs text-gray-400 hover:text-purple-500 py-2 transition-colors"
-          >
-            프리미엄 업그레이드로 미션 무제한 사용하기 →
-          </button>
-        )}
+
       </div>
       <BottomNav role="parent" />
     </div>
