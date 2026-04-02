@@ -194,6 +194,14 @@ export function subscribeToPendingSubmissions(familyId: string, cb: (missions: M
   );
 }
 
+export function subscribeToPendingAssignmentCount(familyId: string, cb: (count: number) => void): () => void {
+  const q = query(assignmentsCol(), where('familyId', '==', familyId), where('status', '==', 'submitted'));
+  return onSnapshot(q,
+    snap => cb(snap.size),
+    err => { console.error('[subscribeToPendingAssignmentCount]', err); cb(0); },
+  );
+}
+
 // ── 출금 요청 ─────────────────────────────────────────────
 
 export async function createWithdrawalRequest(childId: string, points: number): Promise<void> {

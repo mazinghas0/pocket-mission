@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { onAuthChange, signOut } from '@/lib/firebase/auth';
-import { getProfile, getFamily, getFamilyMembers, subscribeToPendingSubmissions } from '@/lib/firebase/db';
+import { getProfile, getFamily, getFamilyMembers, subscribeToPendingAssignmentCount } from '@/lib/firebase/db';
 import { Card } from '@/components/ui/card';
 import { LevelBadge } from '@/components/ui/levelBadge';
 import { BottomNav } from '@/components/ui/bottomNav';
@@ -55,8 +55,8 @@ export default function ParentDashboard() {
       setMembers(members);
       setPageLoading(false);
 
-      unsubMissions = subscribeToPendingSubmissions(p.familyId, (missions) => {
-        setPendingCount(missions.length);
+      unsubMissions = subscribeToPendingAssignmentCount(p.familyId, (count) => {
+        setPendingCount(count);
       });
     });
 
