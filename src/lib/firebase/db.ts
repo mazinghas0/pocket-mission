@@ -291,8 +291,8 @@ export function subscribeFamilyDefinitions(
   );
 }
 
-export async function getDefinitionAssignments(definitionId: string): Promise<MissionAssignment[]> {
-  const q = query(assignmentsCol(), where('definitionId', '==', definitionId));
+export async function getDefinitionAssignments(definitionId: string, familyId: string): Promise<MissionAssignment[]> {
+  const q = query(assignmentsCol(), where('definitionId', '==', definitionId), where('familyId', '==', familyId));
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as MissionAssignment));
 }
@@ -305,12 +305,13 @@ export async function getFamilyAssignments(familyId: string): Promise<MissionAss
 
 export async function updateDefinition(
   defId: string,
+  familyId: string,
   data: Partial<Pick<MissionDefinition, 'title' | 'description' | 'points' | 'dueDate' | 'isRecurring'>>,
 ): Promise<void> {
   const batch = writeBatch(db);
   batch.update(doc(definitionsCol(), defId), data);
 
-  const assignments = await getDefinitionAssignments(defId);
+  const assignments = await getDefinitionAssignments(defId, familyId);
   for (const a of assignments) {
     if (a.status === 'pending') {
       batch.update(doc(assignmentsCol(), a.id), data);
@@ -319,8 +320,8 @@ export async function updateDefinition(
   await batch.commit();
 }
 
-export async function deleteMissionDefinition(defId: string): Promise<void> {
-  const assignments = await getDefinitionAssignments(defId);
+export async function deleteMissionDefinition(defId: string, familyId: string): Promise<void> {
+  const assignments = await getDefinitionAssignments(defId, familyId);
   const batch = writeBatch(db);
 
   for (const a of assignments) {

@@ -42,7 +42,7 @@ export default function ParentMissionsPage() {
           const withAssignments = await Promise.all(
             defs.map(async (def) => ({
               definition: def,
-              assignments: await getDefinitionAssignments(def.id),
+              assignments: await getDefinitionAssignments(def.id, def.familyId),
             })),
           );
           setItems(withAssignments);
@@ -58,8 +58,8 @@ export default function ParentMissionsPage() {
     return () => { unsubAuth(); unsubDefs?.(); };
   }, [router]);
 
-  async function handleDelete(defId: string) {
-    await deleteMissionDefinition(defId);
+  async function handleDelete(defId: string, familyId: string) {
+    await deleteMissionDefinition(defId, familyId);
     setConfirming(null);
   }
 
@@ -140,7 +140,7 @@ export default function ParentMissionsPage() {
                   <>
                     <span className="text-xs text-red-500">전체 삭제할까요?</span>
                     <button
-                      onClick={() => handleDelete(definition.id)}
+                      onClick={() => handleDelete(definition.id, definition.familyId)}
                       className="text-xs text-red-600 font-semibold"
                     >
                       확인

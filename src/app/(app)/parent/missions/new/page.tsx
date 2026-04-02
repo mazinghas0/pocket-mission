@@ -27,12 +27,14 @@ export default function NewMissionPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [defId, setDefId] = useState('');
+  const [defFamilyId, setDefFamilyId] = useState('');
 
   useEffect(() => {
     if (!editId) return;
     getAssignment(editId).then((m) => {
       if (!m) return;
       setDefId(m.definitionId);
+      setDefFamilyId(m.familyId);
       setTitle(m.title);
       setDescription(m.description);
       setPoints(m.points);
@@ -59,7 +61,7 @@ export default function NewMissionPage() {
 
     try {
       if (editId) {
-        await updateDefinition(defId, {
+        await updateDefinition(defId, defFamilyId, {
           title,
           description,
           points,
