@@ -4,17 +4,17 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { onAuthChange, signOut } from '@/lib/firebase/auth';
-import { getProfile, getFamily, getFamilyMembers, subscribeToFamilyMissions } from '@/lib/firebase/db';
+import { getProfile, getFamily, getFamilyMembers, subscribeChildAssignments } from '@/lib/firebase/db';
 import { Card } from '@/components/ui/card';
 import { LevelBadge } from '@/components/ui/levelBadge';
 import { BottomNav } from '@/components/ui/bottomNav';
 import { PointBalance } from '@/components/wallet/pointBalance';
-import type { Profile, Mission } from '@/types';
+import type { Profile, MissionAssignment } from '@/types';
 
 export default function ChildDashboard() {
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [missions, setMissions] = useState<Mission[]>([]);
+  const [missions, setMissions] = useState<MissionAssignment[]>([]);
   const [familyMembers, setFamilyMembers] = useState<Profile[]>([]);
   const [pointRate, setPointRate] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -38,8 +38,8 @@ export default function ChildDashboard() {
       setFamilyMembers(mbrs);
       setLoading(false);
 
-      unsubMissions = subscribeToFamilyMissions(p.familyId, (data) => {
-        setMissions(data.filter(m => m.assignedTo === user.uid));
+      unsubMissions = subscribeChildAssignments(user.uid, p.familyId, (data) => {
+        setMissions(data);
       });
     });
 
