@@ -2,9 +2,32 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'PocketMission — 미션 기반 용돈 관리',
-  description: '부모와 자녀가 함께하는 미션 기반 용돈 관리 앱',
+  title: '포켓미션 — 미션 기반 용돈 관리',
+  description: '아이가 미션을 완료하면 포인트를 받아요. 부모와 자녀가 함께하는 습관 형성 용돈 앱.',
   manifest: '/manifest.json',
+  metadataBase: new URL('https://pocket-mission.pages.dev'),
+  openGraph: {
+    title: '포켓미션 — 미션 기반 용돈 관리',
+    description: '아이가 미션을 완료하면 포인트를 받아요. 부모와 자녀가 함께하는 습관 형성 용돈 앱.',
+    url: 'https://pocket-mission.pages.dev',
+    siteName: '포켓미션',
+    images: [
+      {
+        url: '/icons/icon-512.png',
+        width: 512,
+        height: 512,
+        alt: '포켓미션 앱 아이콘',
+      },
+    ],
+    locale: 'ko_KR',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: '포켓미션 — 미션 기반 용돈 관리',
+    description: '아이가 미션을 완료하면 포인트를 받아요. 부모와 자녀가 함께하는 습관 형성 용돈 앱.',
+    images: ['/icons/icon-512.png'],
+  },
 };
 
 export const viewport: Viewport = {
