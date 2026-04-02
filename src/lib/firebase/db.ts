@@ -48,11 +48,12 @@ export async function saveFcmToken(uid: string, token: string): Promise<void> {
 }
 
 export async function getParentFcmTokens(familyId: string): Promise<string[]> {
-  const q = query(usersCol(), where('familyId', '==', familyId), where('role', '==', 'parent'));
+  const q = query(usersCol(), where('familyId', '==', familyId));
   const snap = await getDocs(q);
   return snap.docs
-    .map(d => (d.data() as Profile).fcmToken)
-    .filter((t): t is string => !!t);
+    .map(d => d.data() as Profile)
+    .filter(p => p.role === 'parent' && !!p.fcmToken)
+    .map(p => p.fcmToken as string);
 }
 
 export async function getChildFcmToken(childId: string): Promise<string | null> {

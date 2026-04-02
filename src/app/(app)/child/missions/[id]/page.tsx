@@ -60,20 +60,24 @@ export default function MissionSubmitPage() {
         status: 'pending',
       });
 
-      const parentTokens = await getParentFcmTokens(mission.familyId);
-      if (parentTokens.length > 0) {
-        await fetch('/api/notify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            tokens: parentTokens,
-            title: '미션 인증 대기',
-            body: `${mission.title} 미션 인증을 확인해주세요!`,
-          }),
-        }).catch(() => {});
-      }
-
       router.push('/child/missions');
+
+      try {
+        const parentTokens = await getParentFcmTokens(mission.familyId);
+        if (parentTokens.length > 0) {
+          await fetch('/api/notify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              tokens: parentTokens,
+              title: '미션 인증 대기',
+              body: `${mission.title} 미션 인증을 확인해주세요!`,
+            }),
+          });
+        }
+      } catch {
+        // 알림 실패는 무시 — 미션 제출 자체는 성공
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : '인증 제출에 실패했습니다.');
       setSubmitting(false);
