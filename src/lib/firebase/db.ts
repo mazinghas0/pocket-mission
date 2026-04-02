@@ -413,6 +413,34 @@ export async function rejectAssignmentSubmission(
   await batch.commit();
 }
 
+export async function createAssignmentsForNewChild(
+  familyId: string,
+  childId: string,
+): Promise<void> {
+  const snap = await getDocs(query(definitionsCol(), where('familyId', '==', familyId)));
+  if (snap.empty) return;
+
+  const batch = writeBatch(db);
+  snap.docs.forEach((defDoc) => {
+    const def = defDoc.data() as Omit<MissionDefinition, 'id'>;
+    const assignRef = doc(assignmentsCol());
+    batch.set(assignRef, {
+      definitionId: defDoc.id,
+      familyId,
+      childId,
+      title: def.title,
+      description: def.description,
+      points: def.points,
+      isRecurring: def.isRecurring,
+      ...(def.templateId && { templateId: def.templateId }),
+      ...(def.dueDate && { dueDate: def.dueDate }),
+      status: 'pending',
+      createdAt: serverTimestamp(),
+    });
+  });
+  await batch.commit();
+}
+
 export async function getAssignmentSubmissions(assignmentId: string): Promise<AssignmentSubmission[]> {
   const snap = await getDocs(assignmentSubmissionsCol(assignmentId));
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as AssignmentSubmission));

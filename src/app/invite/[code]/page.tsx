@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { onAuthChange } from '@/lib/firebase/auth';
-import { getProfile, getFamilyByInviteCode, updateProfile } from '@/lib/firebase/db';
+import { getProfile, getFamilyByInviteCode, updateProfile, createAssignmentsForNewChild } from '@/lib/firebase/db';
 import type { Family } from '@/types';
 
 export default function InvitePage() {
@@ -47,6 +47,15 @@ export default function InvitePage() {
         return;
       }
       await updateProfile(userId, { familyId: family.id });
+
+      if (profile?.role === 'child') {
+        try {
+          await createAssignmentsForNewChild(family.id, userId);
+        } catch (err) {
+          console.error('[Invite] 미션 자동 배정 실패:', err);
+        }
+      }
+
       router.replace(profile?.role === 'parent' ? '/parent' : '/child');
     } catch {
       setError('가족 참여에 실패했습니다.');

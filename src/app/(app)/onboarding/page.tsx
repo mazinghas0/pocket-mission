@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { nanoid } from 'nanoid';
 import { getCurrentUser, signOut } from '@/lib/firebase/auth';
-import { createFamily, getFamilyByInviteCode, getProfile, updateProfile } from '@/lib/firebase/db';
+import { createFamily, getFamilyByInviteCode, getProfile, updateProfile, createAssignmentsForNewChild } from '@/lib/firebase/db';
 
 type Step = 'choice' | 'create' | 'join';
 
@@ -55,6 +55,14 @@ export default function OnboardingPage() {
 
       const profile = await getProfile(user.uid);
       await updateProfile(user.uid, { familyId: family.id });
+
+      if (profile?.role === 'child') {
+        try {
+          await createAssignmentsForNewChild(family.id, user.uid);
+        } catch (err) {
+          console.error('[Onboarding] 미션 자동 배정 실패:', err);
+        }
+      }
 
       router.replace(profile?.role === 'parent' ? '/parent' : '/child');
     } catch (err) {

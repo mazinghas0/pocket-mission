@@ -75,7 +75,6 @@ export default function NewMissionPage() {
 
         const members = await getFamilyMembers(profile.familyId);
         const childIds = members.filter(m => m.role === 'child').map(m => m.id);
-        if (childIds.length === 0) throw new Error('가족에 자녀가 없습니다.');
 
         await createMissionDefinitionWithAssignments(
           {
