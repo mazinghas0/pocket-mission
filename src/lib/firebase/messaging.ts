@@ -1,7 +1,7 @@
 import { getMessaging, getToken } from 'firebase/messaging';
 import app from './client';
 
-const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY ?? '';
+const VAPID_KEY = 'BMRs8r6cbtdf7nd5-SLUthv6oRY0PuaQHRVuiQLfYSpTJSihU0qVd91Yjj1ag4FycYs4B9IHWRyvA1qXEPT_I3g';
 
 export async function requestFcmToken(): Promise<string | null> {
   if (typeof window === 'undefined') return null;
