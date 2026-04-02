@@ -25,6 +25,26 @@ export async function requestFcmToken(): Promise<string | null> {
   }
 }
 
+function playNotificationSound(): void {
+  try {
+    const ctx = new AudioContext();
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(880, ctx.currentTime);
+    oscillator.frequency.setValueAtTime(1100, ctx.currentTime + 0.1);
+    oscillator.frequency.setValueAtTime(880, ctx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+    oscillator.start(ctx.currentTime);
+    oscillator.stop(ctx.currentTime + 0.4);
+  } catch {
+    // 자동재생 정책으로 실패 시 무시
+  }
+}
+
 export function setupForegroundNotifications(): () => void {
   if (typeof window === 'undefined') return () => {};
   if (!('Notification' in window)) return () => {};
@@ -39,6 +59,7 @@ export function setupForegroundNotifications(): () => void {
         body,
         icon: '/icons/icon-192.png',
       });
+      playNotificationSound();
     });
     return unsubscribe;
   } catch {

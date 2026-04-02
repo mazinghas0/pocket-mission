@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthChange } from '@/lib/firebase/auth';
-import { saveFcmToken } from '@/lib/firebase/db';
+import { saveFcmToken, getProfile, subscribeToPendingAssignmentCount } from '@/lib/firebase/db';
 import { requestFcmToken, setupForegroundNotifications } from '@/lib/firebase/messaging';
 import { IosInstallBanner } from '@/components/ui/iosInstallBanner';
 
@@ -13,6 +13,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let unsubForeground: (() => void) | null = null;
+
+    let unsubBadge: (() => void) | null = null;
 
     const unsub = onAuthChange(async (user) => {
       if (!user) {
@@ -26,9 +28,26 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         await saveFcmToken(user.uid, token).catch(() => {});
         unsubForeground = setupForegroundNotifications();
       }
+
+      if ('setAppBadge' in navigator) {
+        try {
+          const profile = await getProfile(user.uid);
+          if (profile?.familyId && profile.role === 'parent') {
+            unsubBadge = subscribeToPendingAssignmentCount(profile.familyId, (count) => {
+              if (count > 0) {
+                navigator.setAppBadge(count).catch(() => {});
+              } else {
+                navigator.clearAppBadge().catch(() => {});
+              }
+            });
+          }
+        } catch {
+          // 배지 설정 실패 무시
+        }
+      }
     });
 
-    return () => { unsub(); unsubForeground?.(); };
+    return () => { unsub(); unsubForeground?.(); unsubBadge?.(); };
   }, [router]);
 
   if (!checked) {
