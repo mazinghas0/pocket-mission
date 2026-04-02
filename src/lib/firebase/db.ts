@@ -329,6 +329,32 @@ export async function getDefinitionAssignments(definitionId: string, familyId: s
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as MissionAssignment));
 }
 
+export async function getFamilyDefinitions(familyId: string): Promise<MissionDefinition[]> {
+  const q = query(definitionsCol(), where('familyId', '==', familyId));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as MissionDefinition));
+}
+
+export async function createSingleAssignment(def: MissionDefinition, childId: string): Promise<void> {
+  await addDoc(assignmentsCol(), {
+    definitionId: def.id,
+    familyId: def.familyId,
+    childId,
+    title: def.title,
+    description: def.description,
+    points: def.points,
+    isRecurring: def.isRecurring,
+    ...(def.frequency && { frequency: def.frequency }),
+    ...(def.category && { category: def.category }),
+    ...(def.color && { color: def.color }),
+    ...(def.emoji && { emoji: def.emoji }),
+    ...(def.templateId && { templateId: def.templateId }),
+    ...(def.dueDate && { dueDate: def.dueDate }),
+    status: 'pending',
+    createdAt: serverTimestamp(),
+  });
+}
+
 export async function getFamilyAssignments(familyId: string): Promise<MissionAssignment[]> {
   const q = query(assignmentsCol(), where('familyId', '==', familyId));
   const snap = await getDocs(q);
