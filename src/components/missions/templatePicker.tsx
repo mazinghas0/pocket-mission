@@ -13,10 +13,16 @@ export function TemplatePicker({ onSelect }: TemplatePickerProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getMissionTemplates().then((data) => {
-      setTemplates(data);
-      setLoading(false);
-    });
+    getMissionTemplates()
+      .then((data) => {
+        setTemplates(data);
+      })
+      .catch((err) => {
+        console.error('[TemplatePicker] 템플릿 로드 실패:', err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   if (loading) {

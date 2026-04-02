@@ -38,14 +38,20 @@ export default function ParentMissionsPage() {
       setMembers(familyMembers.filter(m => m.role === 'child'));
 
       unsubDefs = subscribeFamilyDefinitions(profile.familyId, async (defs) => {
-        const withAssignments = await Promise.all(
-          defs.map(async (def) => ({
-            definition: def,
-            assignments: await getDefinitionAssignments(def.id),
-          })),
-        );
-        setItems(withAssignments);
-        setLoading(false);
+        try {
+          const withAssignments = await Promise.all(
+            defs.map(async (def) => ({
+              definition: def,
+              assignments: await getDefinitionAssignments(def.id),
+            })),
+          );
+          setItems(withAssignments);
+        } catch (err) {
+          console.error('[ParentMissions] 미션 로드 실패:', err);
+          setItems([]);
+        } finally {
+          setLoading(false);
+        }
       });
     });
 
