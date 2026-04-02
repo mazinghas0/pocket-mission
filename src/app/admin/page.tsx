@@ -146,6 +146,7 @@ export default function AdminPage() {
                 <tr className="border-b border-gray-700">
                   <th className="text-left px-4 py-3 text-gray-400 font-medium">이름</th>
                   <th className="text-left px-4 py-3 text-gray-400 font-medium">역할</th>
+                  <th className="text-center px-4 py-3 text-gray-400 font-medium">알림</th>
                   <th className="text-right px-4 py-3 text-gray-400 font-medium">포인트</th>
                   <th className="text-right px-4 py-3 text-gray-400 font-medium">가입일</th>
                 </tr>
@@ -159,6 +160,11 @@ export default function AdminPage() {
                         u.role === 'parent' ? 'bg-orange-500/20 text-orange-400' : 'bg-purple-500/20 text-purple-400'
                       }`}>
                         {u.role === 'parent' ? '부모' : '자녀'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${u.fcmToken ? 'bg-green-500/20 text-green-400' : 'bg-gray-600/40 text-gray-500'}`}>
+                        {u.fcmToken ? 'ON' : '-'}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right text-gray-300">{u.points.toLocaleString()}P</td>

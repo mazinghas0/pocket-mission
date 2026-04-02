@@ -506,6 +506,7 @@ export interface AdminUser {
   role: Role;
   familyId: string | null;
   points: number;
+  fcmToken?: string;
   createdAt: Timestamp;
 }
 
