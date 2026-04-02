@@ -1,13 +1,14 @@
 import {
   collection, doc, getDoc, getDocs, setDoc, addDoc,
   updateDoc, deleteDoc, query, where, orderBy, serverTimestamp,
-  onSnapshot, Timestamp, writeBatch,
+  onSnapshot, Timestamp, writeBatch, limit,
 } from 'firebase/firestore';
 import { db } from './client';
 import type {
   Family, Profile, Mission, MissionSubmission, PointTransaction,
   WithdrawalRequest, MissionTemplate, SubmissionWithDetails,
   MissionDefinition, MissionAssignment, AssignmentSubmission, AssignmentWithDetails,
+  Role, SubscriptionStatus,
 } from '@/types';
 
 // ── 컬렉션 참조 ──────────────────────────────────────────
@@ -468,4 +469,51 @@ export async function getPendingFamilyAssignmentSubmissions(
     }
   }
   return result;
+}
+
+// ── 어드민 전용 쿼리 ──────────────────────────────────────
+
+export interface AdminUser {
+  id: string;
+  name: string;
+  role: Role;
+  familyId: string | null;
+  points: number;
+  createdAt: Timestamp;
+}
+
+export interface AdminFamily {
+  id: string;
+  name: string;
+  inviteCode: string;
+  subscriptionStatus: SubscriptionStatus;
+  memberCount: number;
+  createdAt: Timestamp;
+}
+
+export async function getAdminUsers(count = 50): Promise<AdminUser[]> {
+  const q = query(usersCol(), orderBy('createdAt', 'desc'), limit(count));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as AdminUser));
+}
+
+export async function getAdminFamilies(count = 50): Promise<AdminFamily[]> {
+  const q = query(familiesCol(), orderBy('createdAt', 'desc'), limit(count));
+  const snap = await getDocs(q);
+  const families = snap.docs.map(d => ({ id: d.id, ...d.data() } as Family));
+
+  const results: AdminFamily[] = await Promise.all(
+    families.map(async (f) => {
+      const membersSnap = await getDocs(query(usersCol(), where('familyId', '==', f.id)));
+      return {
+        id: f.id,
+        name: f.name,
+        inviteCode: f.inviteCode,
+        subscriptionStatus: f.subscriptionStatus,
+        memberCount: membersSnap.size,
+        createdAt: f.createdAt,
+      };
+    }),
+  );
+  return results;
 }
