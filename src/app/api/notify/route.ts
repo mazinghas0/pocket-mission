@@ -78,7 +78,7 @@ async function getAccessToken(): Promise<string> {
 
 async function sendFcmMessage(token: string, title: string, body: string): Promise<void> {
   const accessToken = await getAccessToken();
-  await fetch(FCM_ENDPOINT, {
+  const res = await fetch(FCM_ENDPOINT, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -91,6 +91,10 @@ async function sendFcmMessage(token: string, title: string, body: string): Promi
       },
     }),
   });
+  if (!res.ok) {
+    const errBody = await res.text();
+    throw new Error(`FCM ${res.status}: ${errBody}`);
+  }
 }
 
 export async function POST(request: Request): Promise<Response> {
@@ -105,8 +109,11 @@ export async function POST(request: Request): Promise<Response> {
       return Response.json({ ok: false, error: '필수 파라미터 누락' }, { status: 400 });
     }
 
-    await Promise.allSettled(tokens.map(t => sendFcmMessage(t, title, body)));
-    return Response.json({ ok: true });
+    const results = await Promise.allSettled(tokens.map(t => sendFcmMessage(t, title, body)));
+    const failures = results
+      .map((r, i) => r.status === 'rejected' ? { token: tokens[i].slice(0, 20), error: (r as PromiseRejectedResult).reason?.message } : null)
+      .filter(Boolean);
+    return Response.json({ ok: true, failures });
   } catch (err) {
     const message = err instanceof Error ? err.message : '알림 발송 실패';
     return Response.json({ ok: false, error: message }, { status: 500 });
