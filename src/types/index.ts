@@ -53,6 +53,10 @@ export interface Mission {
   status: MissionStatus;
   dueDate?: Timestamp;
   isRecurring: boolean;
+  frequency?: MissionFrequency;
+  category?: MissionCategory;
+  color?: MissionColor;
+  emoji?: string;
   createdAt: Timestamp;
 }
 
