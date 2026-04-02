@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { onAuthChange, signOut } from '@/lib/firebase/auth';
-import { getProfile, getFamily, getFamilyMembers, subscribeChildAssignments } from '@/lib/firebase/db';
+import { getProfile, getFamily, getFamilyMembers, subscribeChildAssignments, getFamilyAssignments } from '@/lib/firebase/db';
 import { Card } from '@/components/ui/card';
 import { LevelBadge } from '@/components/ui/levelBadge';
 import { BottomNav } from '@/components/ui/bottomNav';
 import { PointBalance } from '@/components/wallet/pointBalance';
+import { DashboardSkeleton } from '@/components/ui/skeleton';
 import type { Profile, MissionAssignment } from '@/types';
 
 export default function ChildDashboard() {
@@ -17,6 +18,7 @@ export default function ChildDashboard() {
   const [missions, setMissions] = useState<MissionAssignment[]>([]);
   const [familyMembers, setFamilyMembers] = useState<Profile[]>([]);
   const [pointRate, setPointRate] = useState(1);
+  const [streak, setStreak] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,6 +38,33 @@ export default function ChildDashboard() {
       ]);
       if (fam) setPointRate(fam.pointRate ?? 1);
       setFamilyMembers(mbrs);
+
+      const allAssignments = await getFamilyAssignments(p.familyId);
+      const myApproved = allAssignments
+        .filter(a => a.childId === user.uid && a.status === 'approved' && a.createdAt)
+        .map(a => {
+          const d = a.createdAt.toDate();
+          return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+        })
+        .filter((v, i, arr) => arr.indexOf(v) === i)
+        .sort()
+        .reverse();
+
+      let s = 0;
+      const today = new Date();
+      for (let i = 0; i < myApproved.length; i++) {
+        const checkDate = new Date(today);
+        checkDate.setDate(checkDate.getDate() - i);
+        const checkKey = `${checkDate.getFullYear()}-${checkDate.getMonth()}-${checkDate.getDate()}`;
+        if (myApproved.includes(checkKey)) {
+          s++;
+        } else if (i === 0) {
+          continue;
+        } else {
+          break;
+        }
+      }
+      setStreak(s);
       setLoading(false);
 
       unsubMissions = subscribeChildAssignments(user.uid, p.familyId, (data) => {
@@ -53,11 +82,7 @@ export default function ChildDashboard() {
   const submittedCount = missions.filter(m => m.status === 'submitted').length;
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-purple-50 flex items-center justify-center">
-        <p className="text-gray-400 text-sm">불러오는 중...</p>
-      </div>
-    );
+    return <DashboardSkeleton color="purple" />;
   }
 
   return (
@@ -116,6 +141,16 @@ export default function ChildDashboard() {
             </Card>
           </Link>
         </div>
+
+        {streak > 0 && (
+          <Card className="flex items-center gap-3">
+            <span className="text-2xl">🔥</span>
+            <div>
+              <p className="font-bold text-orange-700">{streak}일 연속 달성!</p>
+              <p className="text-xs text-gray-500">매일 미션을 완료해서 기록을 이어가세요</p>
+            </div>
+          </Card>
+        )}
 
         {familyMembers.length > 0 && (
           <Card>

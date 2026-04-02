@@ -381,6 +381,76 @@ export async function getFamilyAssignments(familyId: string): Promise<MissionAss
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as MissionAssignment));
 }
 
+export interface ChildStats {
+  childId: string;
+  childName: string;
+  totalAssignments: number;
+  approvedCount: number;
+  pendingCount: number;
+  submittedCount: number;
+  rejectedCount: number;
+  completionRate: number;
+  totalPoints: number;
+  streak: number;
+}
+
+export async function getChildStats(familyId: string): Promise<ChildStats[]> {
+  const [members, assignments] = await Promise.all([
+    getFamilyMembers(familyId),
+    getFamilyAssignments(familyId),
+  ]);
+
+  const children = members.filter(m => m.role === 'child');
+
+  return children.map(child => {
+    const childAssignments = assignments.filter(a => a.childId === child.id);
+    const approvedCount = childAssignments.filter(a => a.status === 'approved').length;
+    const pendingCount = childAssignments.filter(a => ['pending', 'in_progress'].includes(a.status)).length;
+    const submittedCount = childAssignments.filter(a => a.status === 'submitted').length;
+    const rejectedCount = childAssignments.filter(a => a.status === 'rejected').length;
+    const totalAssignments = childAssignments.length;
+    const completionRate = totalAssignments > 0 ? Math.round((approvedCount / totalAssignments) * 100) : 0;
+
+    const approvedDates = childAssignments
+      .filter(a => a.status === 'approved' && a.createdAt)
+      .map(a => {
+        const d = a.createdAt.toDate();
+        return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      })
+      .filter((v, i, arr) => arr.indexOf(v) === i)
+      .sort()
+      .reverse();
+
+    let streak = 0;
+    const today = new Date();
+    for (let i = 0; i < approvedDates.length; i++) {
+      const checkDate = new Date(today);
+      checkDate.setDate(checkDate.getDate() - i);
+      const checkKey = `${checkDate.getFullYear()}-${checkDate.getMonth()}-${checkDate.getDate()}`;
+      if (approvedDates.includes(checkKey)) {
+        streak++;
+      } else if (i === 0) {
+        continue;
+      } else {
+        break;
+      }
+    }
+
+    return {
+      childId: child.id,
+      childName: child.name,
+      totalAssignments,
+      approvedCount,
+      pendingCount,
+      submittedCount,
+      rejectedCount,
+      completionRate,
+      totalPoints: child.points,
+      streak,
+    };
+  });
+}
+
 export async function updateDefinition(
   defId: string,
   familyId: string,

@@ -8,6 +8,8 @@ import {
   getProfile, getFamilyMembers, subscribeFamilyDefinitions,
   getDefinitionAssignments, deleteMissionDefinition,
 } from '@/lib/firebase/db';
+import { ListSkeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/emptyState';
 import { BottomNav } from '@/components/ui/bottomNav';
 import { Badge } from '@/components/ui/badge';
 import { getMissionStatusColor, getMissionStatusLabel, formatPoints } from '@/lib/utils';
@@ -75,16 +77,15 @@ export default function ParentMissionsPage() {
 
       <div className="px-4 mt-4 space-y-3">
         {loading ? (
-          <p className="text-center text-gray-400 py-10 text-sm">불러오는 중...</p>
+          <ListSkeleton count={3} />
         ) : items.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">
-            <div className="text-4xl mb-3">📋</div>
-            <p className="text-sm">아직 미션이 없어요</p>
-            <p className="text-xs mt-1">아이의 첫 미션을 만들어보세요!</p>
-            <Link href="/parent/missions/new" className="inline-block mt-3 bg-orange-500 text-white text-sm font-semibold px-5 py-2 rounded-xl">
-              첫 미션 만들기
-            </Link>
-          </div>
+          <EmptyState
+            emoji="📋"
+            title="아직 미션이 없어요"
+            description="아이의 첫 미션을 만들어보세요!"
+            actionLabel="첫 미션 만들기"
+            actionHref="/parent/missions/new"
+          />
         ) : (
           items.map(({ definition, assignments }) => (
             <div key={definition.id} className="bg-white rounded-2xl p-4 shadow-sm">

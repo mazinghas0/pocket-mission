@@ -10,6 +10,7 @@ import { LevelBadge } from '@/components/ui/levelBadge';
 import { BottomNav } from '@/components/ui/bottomNav';
 import { formatPoints } from '@/lib/utils';
 import { QrCodeModal } from '@/components/ui/qrCodeModal';
+import { DashboardSkeleton } from '@/components/ui/skeleton';
 import type { Profile, Family } from '@/types';
 
 export default function ParentDashboard() {
@@ -94,11 +95,7 @@ export default function ParentDashboard() {
   }, [router]);
 
   if (pageLoading) {
-    return (
-      <div className="min-h-screen bg-orange-50 flex items-center justify-center">
-        <p className="text-gray-400 text-sm">불러오는 중...</p>
-      </div>
-    );
+    return <DashboardSkeleton color="orange" />;
   }
 
   return (

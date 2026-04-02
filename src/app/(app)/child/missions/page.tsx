@@ -6,6 +6,8 @@ import { useMissions } from '@/hooks/useMissions';
 import { MissionCard } from '@/components/missions/missionCard';
 import type { MissionAssignment } from '@/types';
 import { BottomNav } from '@/components/ui/bottomNav';
+import { ListSkeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/emptyState';
 
 export default function ChildMissionsPage() {
   const router = useRouter();
@@ -28,7 +30,7 @@ export default function ChildMissionsPage() {
 
       <div className="px-4 mt-4 space-y-6">
         {loading && (
-          <p className="text-center text-gray-400 py-10 text-sm">미션 불러오는 중...</p>
+          <ListSkeleton count={3} />
         )}
 
         {error && (
@@ -36,10 +38,11 @@ export default function ChildMissionsPage() {
         )}
 
         {!loading && missions.length === 0 && (
-          <div className="text-center py-16 text-gray-400">
-            <div className="text-4xl mb-3">🎯</div>
-            <p className="text-sm">부모님이 미션을 배정해주실 거예요!</p>
-          </div>
+          <EmptyState
+            emoji="🎯"
+            title="아직 미션이 없어요"
+            description="부모님이 미션을 배정해주실 거예요!"
+          />
         )}
 
         {activeMissions.length > 0 && (

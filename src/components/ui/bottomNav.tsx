@@ -13,8 +13,8 @@ const PARENT_NAV: NavItem[] = [
   { href: '/parent', label: '홈', emoji: '🏠' },
   { href: '/parent/missions', label: '미션', emoji: '📋' },
   { href: '/parent/approvals', label: '승인', emoji: '✅' },
+  { href: '/parent/stats', label: '통계', emoji: '📊' },
   { href: '/parent/wallet', label: '용돈', emoji: '💰' },
-  { href: '/settings', label: '설정', emoji: '⚙️' },
 ];
 
 const CHILD_NAV: NavItem[] = [
