@@ -4,6 +4,7 @@ const ADMIN_EMAIL = 'mazinghas0@gmail.com';
 const PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? 'pocket-mission';
 const FCM_ENDPOINT = `https://fcm.googleapis.com/v1/projects/${PROJECT_ID}/messages:send`;
 const TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token';
+const VOICE_TOPIC = 'robin-voice';
 const FIRESTORE_BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
 
 function pemToArrayBuffer(pem: string): ArrayBuffer {
@@ -130,6 +131,37 @@ async function getAdminFcmToken(accessToken: string): Promise<string | null> {
   return null;
 }
 
+interface NotifyRequest {
+  title: string;
+  body?: string;
+  level?: string;
+  source?: string;
+}
+
+async function sendVoiceMessage(accessToken: string, req: NotifyRequest): Promise<boolean> {
+  const res = await fetch(FCM_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      message: {
+        topic: VOICE_TOPIC,
+        data: {
+          title: req.title,
+          body: req.body ?? '',
+          level: req.level === 'urgent' ? 'urgent' : 'info',
+          source: (req.source ?? 'robin').slice(0, 20),
+          sentAt: String(Date.now()),
+        },
+        android: { priority: 'HIGH', ttl: '600s' },
+      },
+    }),
+  });
+  return res.ok;
+}
+
 export async function POST(request: Request): Promise<Response> {
   try {
     const secret = request.headers.get('x-internal-secret');
@@ -137,15 +169,17 @@ export async function POST(request: Request): Promise<Response> {
       return Response.json({ ok: false, error: '인증 실패' }, { status: 401 });
     }
 
-    const { title, body } = await request.json() as { title: string; body: string };
+    const notifyRequest = await request.json() as NotifyRequest;
+    const { title, body } = notifyRequest;
     if (!title) {
       return Response.json({ ok: false, error: 'title 필수' }, { status: 400 });
     }
 
     const accessToken = await getServiceAccessToken();
+    const voice = await sendVoiceMessage(accessToken, notifyRequest).catch(() => false);
     const fcmToken = await getAdminFcmToken(accessToken);
     if (!fcmToken) {
-      return Response.json({ ok: false, error: '관리자 FCM 토큰 없음' }, { status: 404 });
+      return Response.json({ ok: false, voice, error: '관리자 FCM 토큰 없음' }, { status: 404 });
     }
 
     const fcmRes = await fetch(FCM_ENDPOINT, {
@@ -164,10 +198,10 @@ export async function POST(request: Request): Promise<Response> {
 
     if (!fcmRes.ok) {
       const errBody = await fcmRes.text();
-      return Response.json({ ok: false, error: `FCM ${fcmRes.status}: ${errBody}` }, { status: 502 });
+      return Response.json({ ok: false, voice, error: `FCM ${fcmRes.status}: ${errBody}` }, { status: 502 });
     }
 
-    return Response.json({ ok: true });
+    return Response.json({ ok: true, voice });
   } catch (err) {
     const message = err instanceof Error ? err.message : '알림 발송 실패';
     return Response.json({ ok: false, error: message }, { status: 500 });
